@@ -1,5 +1,5 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
-import pygame
+import pygame, sys
 
 # Definiowanie okna gry
 pygame.init()
@@ -26,12 +26,17 @@ def cockpit(x, y):
 
 # Sky
 sky_pic = pygame.image.load("pic/sky.jpg") 
-sky_x = -255
+sky_x = -255 # Wyśrodkowanie horyzontu
 sky_y = -420
 sky_step = 5
+sky_angle = 0
 
 def sky(x,y):
     screen.blit(sky_pic, (x, y))
+def sky_a(a, x, y):
+    sky_pic_copy = pygame.transform.rotate(sky_pic, a)
+    screen.blit(sky_pic, (x - int(sky_pic.get_width() / 2), y - int(sky_pic.get_height() / 2)))
+
 
 run = True
 # Pętla główna
@@ -52,9 +57,12 @@ while run:
         sky_x += sky_step
     if keys[pygame.K_UP]:
         sky_y -= sky_step
-    if keys[pygame.K_DOWN] :
+    if keys[pygame.K_DOWN]:
         sky_y += sky_step
-
+    if keys[pygame.K_a]:
+        sky_y += sky_step
+    if keys[pygame.K_d]:
+        sky_y += sky_step
     
     sky(sky_x, sky_y)
     black(background_x, background_y, background_width, background_height)
