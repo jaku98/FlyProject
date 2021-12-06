@@ -3,7 +3,7 @@ import pygame, sys
 
 # Definiowanie okna gry
 pygame.init()
-screen = pygame.display.set_mode((1280, 1024), pygame.RESIZABLE)
+screen = pygame.display.set_mode((1280, 800))
 pygame.display.set_caption("RADAR Air to Air")
 
 # Czarne tło pod belką
