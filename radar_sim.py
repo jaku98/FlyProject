@@ -3,7 +3,7 @@ import pygame, sys
 
 # Definiowanie okna gry
 pygame.init()
-screen = pygame.display.set_mode((1280, 1024))
+screen = pygame.display.set_mode((1280/2, 1024/2), pygame.RESIZABLE)
 pygame.display.set_caption("RADAR Air to Air")
 
 # Czarne tło pod belką
@@ -26,16 +26,12 @@ def cockpit(x, y):
 
 # Sky
 sky_pic = pygame.image.load("pic/sky.jpg") 
-#h = (sky_pic.get_height())
-#w = (sky_pic.get_width())
-#sky_pic = pygame.transform.scale(sky_pic, h*2, w*2)
 sky_x = -255 # Wyśrodkowanie horyzontu
 sky_y = -420
 sky_step = 5
 sky_angle = 0
 
 def sky(x, y, pic, a):
-    #screen.blit(sky_pic, (x, y))
     orig_rect = pic.get_rect()
     rot_image = pygame.transform.rotate(pic, a)
     rot_rect = orig_rect.copy()
@@ -45,12 +41,23 @@ def sky(x, y, pic, a):
     screen.blit(sky_pic, (x, y))
     return sky_pic
 
+# Czerwnone kółko po kliknięciu
+circle_c = (255,0,0)
+circle_r = 10
+
+def circle(pos):
+    pygame.draw.circle(screen, circle_c, event.pos, circle_r)
+
 run = True
 # Pętla główna
 while run:
     # opóźnienie w grze
-    pygame.time.delay(20)
+    pygame.time.delay(10)
     
+    sky(sky_x, sky_y, sky_pic, sky_angle)
+    black(background_x, background_y, background_width, background_height)
+    cockpit(cockpit_x, cockpit_y)
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -70,9 +77,13 @@ while run:
         sky_angle += sky_step/5
     if keys[pygame.K_a]:
         sky_angle -= sky_step/5
-    
-    sky(sky_x, sky_y, sky_pic, sky_angle)
-    black(background_x, background_y, background_width, background_height)
-    cockpit(cockpit_x, cockpit_y)
+    if event.type == pygame.MOUSEBUTTONDOWN: # If the current event is the mouse button down event
+        mouse_pos = pygame.mouse.get_pos() # Stores the mouse position
+        
+        print('x', mouse_pos[0], 'y', mouse_pos[1])
+        if  ((mouse_pos[0]-17)<115<(mouse_pos[0]+17)) and ((mouse_pos[1]-17)<600<(mouse_pos[1]+17)):
+            circle(mouse_pos)
+            print('czerw')
+
 
     pygame.display.update()
