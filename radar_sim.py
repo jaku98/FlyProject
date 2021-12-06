@@ -1,5 +1,7 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
-import pygame, sys
+import pygame
+import sys
+import pygame_menu
 
 # Definiowanie okna gry
 pygame.init()
@@ -47,6 +49,7 @@ circle_r = 10
 
 def circle(pos):
     pygame.draw.circle(screen, circle_c, event.pos, circle_r)
+
 
 run = True
 # Pętla główna
