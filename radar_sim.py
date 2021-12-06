@@ -10,9 +10,9 @@ pygame.display.set_caption("RADAR Air to Air")
 
 # Czarne tło pod belką
 background_x = 0
-background_y = 570
+background_y = 400
 background_width = 1280
-background_height = 454
+background_height = 400
 background__color = (0, 0, 0)
 
 def black(x, y, w, h):
