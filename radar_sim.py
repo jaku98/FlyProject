@@ -3,7 +3,7 @@ import pygame, sys
 
 # Definiowanie okna gry
 pygame.init()
-screen = pygame.display.set_mode((1280/2, 1024/2), pygame.RESIZABLE)
+screen = pygame.display.set_mode((1280, 1024), pygame.RESIZABLE)
 pygame.display.set_caption("RADAR Air to Air")
 
 # Czarne tło pod belką
@@ -52,7 +52,7 @@ run = True
 # Pętla główna
 while run:
     # opóźnienie w grze
-    pygame.time.delay(10)
+    pygame.time.delay(20)
     
     sky(sky_x, sky_y, sky_pic, sky_angle)
     black(background_x, background_y, background_width, background_height)
