@@ -1,7 +1,6 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
-import pygame
-import sys
-import pygame_menu
+import pygame, sys
+
 
 # Definiowanie okna gry
 pygame.init()
