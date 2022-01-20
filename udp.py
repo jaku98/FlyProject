@@ -3,7 +3,7 @@ import struct
 import codecs
 from numpy import byte
 
-UDP_IP = "" #"172.23.183.43"
+UDP_IP = "" #"172.23.183.43" git fetch --prune
 UDP_PORT = 8000
 BUFFER_SIZE = 512
 
