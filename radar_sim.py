@@ -56,7 +56,7 @@ FCR_y_down = 780
 FCR_y_up = 425
 FCR_y_matrix = [690, 690-43, 690-2*43, 690-3*43, 690-4*43]
 FCR_x_matrix = [530, 530+48, 530+2*48, 530+3*48, 530+4*48]
-FCR_button = 18
+FCR_button = 18.0
 
 run = True
 # Pętla główna
