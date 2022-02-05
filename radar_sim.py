@@ -1,6 +1,6 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
 import pygame, sys
-import udp
+#import udp
 
 # Definiowanie okna 
 pygame.init()
