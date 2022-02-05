@@ -1,13 +1,11 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
 import pygame, sys
+import udp
 
-
-# Definiowanie okna gry
+# Definiowanie okna 
 pygame.init()
 screen = pygame.display.set_mode((600, 600))
 pygame.display.set_caption("RADAR Air to Air")
-
-# Dodawanie kokpitu
 cockpit_pic = pygame.image.load("pic/fcr_pic.png")
 cockpit_x = 0
 cockpit_y = 0
@@ -36,8 +34,7 @@ run = True
 while run:
     # opóźnienie w grze
     pygame.time.delay(20)
-    
-
+    # Inicjalizacja grafiki
     cockpit(cockpit_x, cockpit_y)
 
     for event in pygame.event.get():
@@ -51,14 +48,7 @@ while run:
     #     sky_x -= sky_step
     # if keys[pygame.K_LEFT]:
     #     sky_x += sky_step
-    # if keys[pygame.K_UP]:
-    #     sky_y -= sky_step
-    # if keys[pygame.K_DOWN]:
-    #     sky_y += sky_step
-    # if keys[pygame.K_d]:
-    #     sky_angle += sky_step/5
-    # if keys[pygame.K_a]:
-    #     sky_angle -= sky_step/5
+    
     if event.type == pygame.MOUSEBUTTONDOWN:
         mouse_pos = pygame.mouse.get_pos()
         print('x', mouse_pos[0], 'y', mouse_pos[1])
