@@ -24,12 +24,12 @@ def circle(pos):
 
 # Macierz przycisków FCR
 FCR_x_left = 34
-FCR_x_right = 564
-FCR_y_down = 568
-FCR_y_up = 32
-FCR_y_matrix = [690, 690-43, 690-2*43, 690-3*43, 690-4*43]
-FCR_x_matrix = [530, 530+48, 530+2*48, 530+3*48, 530+4*48]
-FCR_button = 23.0
+FCR_x_right = 562
+FCR_y_down = 569
+FCR_y_up = 33
+FCR_y_matrix = [435, 435-66, 435-2*66, 435-3*66, 435-4*66]
+FCR_x_matrix = [151, 151+73, 151+2*73, 151+3*73, 151+4*73]
+FCR_button = 20.0
 
 run = True
 # Pętla główna
