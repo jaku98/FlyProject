@@ -14,7 +14,8 @@ try:
     while run:
         data, addr = sock.recvfrom(BUFFER_SIZE) # buffer size
         data = struct.unpack("20f3c", data)
-        print("Game Time: ", data[0])
+        print("Game Time: ", data[0], " x: ", data[1], " y: ", data[2], " z: ", data[3])
+
 
 except KeyboardInterrupt:
     print('exit')
