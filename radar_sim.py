@@ -1,7 +1,20 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
 import pygame, sys
-#import udp
+import socket, struct
 
+
+UDP_IP = ""
+UDP_PORT = 8000
+BUFFER_SIZE = 512
+sock = socket.socket(socket.AF_INET, # Internet
+                socket.SOCK_DGRAM) # UDP
+sock.bind((UDP_IP, UDP_PORT))
+
+def receive():
+    data, addr = sock.recvfrom(BUFFER_SIZE) # buffer size
+    data = struct.unpack("20f3c", data)
+    return data
+    
 # Definiowanie okna 
 pygame.init()
 screen = pygame.display.set_mode((600, 600))
@@ -14,10 +27,9 @@ def cockpit(x, y):
     screen.blit(cockpit_pic,(x, y))
 
 # Czerwnone kółko po kliknięciu
-circle_c = (255,0,0)
-circle_r = 10
-
 def circle(pos):
+    circle_c = (255,0,0)
+    circle_r = 10
     pygame.draw.circle(screen, circle_c, event.pos, circle_r)
 
 # Macierz przycisków FCR
@@ -32,11 +44,12 @@ FCR_button = 20.0
 run = True
 # Pętla główna
 while run:
+    data = []
     # opóźnienie w grze
     pygame.time.delay(20)
     # Inicjalizacja grafiki
     cockpit(cockpit_x, cockpit_y)
-
+    receive()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
