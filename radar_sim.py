@@ -1,7 +1,7 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
 import pygame, sys
 import socket, struct
-
+import numpy as np
 
 UDP_IP = ""
 UDP_PORT = 8000
@@ -13,7 +13,6 @@ sock.bind((UDP_IP, UDP_PORT))
 def receive():
     data, addr = sock.recvfrom(BUFFER_SIZE) # buffer size
     data = struct.unpack("20f3c", data)
-    return data
     
 # Definiowanie okna 
 pygame.init()
