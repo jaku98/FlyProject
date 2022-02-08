@@ -1,5 +1,4 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
-from turtle import screensize
 import pygame, sys
 import socket, struct
 import numpy as np
@@ -38,7 +37,7 @@ class Cockpit:
     # Czerwnone kółko po kliknięciu
     def circle(self, pos):
         self.pos = pos
-        self.circle_c = (255,0,0) # color
+        self.circle_c = 'red' # color
         self.circle_r = 10 # size
         pygame.draw.circle(self.screen, self.circle_c, event.pos, self.circle_r)
 
@@ -58,28 +57,30 @@ pyGame = Cockpit()
 run = True
 # Pętla główna
 while run:
-    # opóźnienie w grze
+    # Ctrl + C to terminate
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+    # Delay in game
     pygame.time.delay(1)
 
     # receive decoded message
     message = myUDP.receive()
     print(message)
     
-    # Inicjalizacja grafiki
+    # graphic init
     pyGame.cockpit()
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
             
-    # obsługa zdarzeń 
+    # event handling 
     keys = pygame.key.get_pressed()
-    # warunki do zmiany pozycji obiektu
+
     # if keys[pygame.K_RIGHT]:
     #     sky_x -= sky_step
     # if keys[pygame.K_LEFT]:
     #     sky_x += sky_step
     
+    # position of mousebuttondown
     if event.type == pygame.MOUSEBUTTONDOWN:
         mouse_pos = pygame.mouse.get_pos()
         print('x', mouse_pos[0], 'y', mouse_pos[1])
