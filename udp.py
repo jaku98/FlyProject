@@ -1,6 +1,6 @@
 import socket, struct
 
-UDP_IP = "" #"172.23.183.43"
+UDP_IP = "192.168.8.101" #"172.23.183.43"
 UDP_PORT = 8000
 BUFFER_SIZE = 512
 
@@ -18,4 +18,3 @@ try:
 except KeyboardInterrupt:
     print('exit')
     pass #Ctrl+C to terminate
-

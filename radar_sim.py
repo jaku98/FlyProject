@@ -27,7 +27,7 @@ class Cockpit:
         pygame.init()
         self.screen = pygame.display.set_mode((600, 600))
         pygame.display.set_caption("RADAR Air to Air")
-        self.cockpit_pic = pygame.image.load("pic/fcr_pic.png")
+        self.cockpit_pic = pygame.image.load("pic/fcr_picb.png")
 
     def cockpit(self):
         self._x = 0
@@ -50,7 +50,7 @@ FCR_y_matrix = [435, 435-66, 435-2*66, 435-3*66, 435-4*66]
 FCR_x_matrix = [151, 151+73, 151+2*73, 151+3*73, 151+4*73]
 FCR_button = 20.0
 
-myUDP = UDPConnection("", 8000)
+myUDP = UDPConnection("127.0.0.1", 8000)
 myUDP.connect()
 pyGame = Cockpit()
 
@@ -67,11 +67,10 @@ while run:
 
     # receive decoded message
     message = myUDP.receive()
-    print(message)
-    
+
     # graphic init
     pyGame.cockpit()
-            
+    
     # event handling 
     keys = pygame.key.get_pressed()
 
@@ -134,5 +133,16 @@ while run:
         #         Cockpit.circle(mouse_pos)
         #     if ((mouse_pos[0]-FCR_button)<FCR_x_matrix[4]<(mouse_pos[0]+FCR_button)):
         #         Cockpit.circle(mouse_pos)
+            
+
+    # rysowanie
+    if message[0] != 1.0:
+        x_my, y_my, z_my = message[1], message[2], message[3] 
+        x_friend, y_friend, z_friend = message[4], message[5], message[6]
+
+        #dist_to_friend = np.round(np.sqrt(((x_my-x_friend)**2)+((y_my-y_friend)**2)), 1)
+        print('dane', x_my,x_friend)
+        #color = (255,0,0)
+        #pygame.draw.rect(pyGame.screen, color,(xx1,yy1,20,20))
 
     pygame.display.update()
