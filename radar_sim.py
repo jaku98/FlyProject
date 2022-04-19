@@ -1,4 +1,5 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
+import unreal
 import pygame, sys
 import socket, struct
 import numpy as np
@@ -135,14 +136,16 @@ while run:
         #         Cockpit.circle(mouse_pos)
             
 
-    # rysowanie
-    if message[0] != 1.0:
-        x_my, y_my, z_my = message[1], message[2], message[3] 
-        x_friend, y_friend, z_friend = message[4], message[5], message[6]
-
-        #dist_to_friend = np.round(np.sqrt(((x_my-x_friend)**2)+((y_my-y_friend)**2)), 1)
-        print('dane', x_my,x_friend)
-        #color = (255,0,0)
-        #pygame.draw.rect(pyGame.screen, color,(xx1,yy1,20,20))
+    # Przypisanie zmiennych z odebranej wiadomości
+    gametime = message[0]
+    XPawn, YPawn, ZPawn = message[1], message[2], message[3] 
+    XPawnRadar, YPawnRadar = message[4], message[5]
+    XFoe, YFoe, ZFoe, IndexFoe = message[6], message[7], message[8], message[9]
+    XFriend, YFriend, ZFriend, IndexFriend = message[10], message[11], message[12], message[13]
+    XRoam, YRoam, ZRoam, IndexRoam = message[14], message[15], message[16], message[17]
+    #dist_to_friend = np.round(np.sqrt(((x_my-x_friend)**2)+((y_my-y_friend)**2)), 1)
+    print('REC DATA:', message)
+    #color = (255,0,0)
+    #pygame.draw.rect(pyGame.screen, color,(xx1,yy1,20,20))
 
     pygame.display.update()
