@@ -134,18 +134,32 @@ while run:
         #         Cockpit.circle(mouse_pos)
         #     if ((mouse_pos[0]-FCR_button)<FCR_x_matrix[4]<(mouse_pos[0]+FCR_button)):
         #         Cockpit.circle(mouse_pos)
-            
 
+        
+    
     # Przypisanie zmiennych z odebranej wiadomości
-    gametime = message[0]
-    XPawn, YPawn, ZPawn = message[1], message[2], message[3] 
-    XPawnRadar, YPawnRadar = message[4], message[5]
-    XFoe, YFoe, ZFoe, IndexFoe = message[6], message[7], message[8], message[9]
-    XFriend, YFriend, ZFriend, IndexFriend = message[10], message[11], message[12], message[13]
-    XRoam, YRoam, ZRoam, IndexRoam = message[14], message[15], message[16], message[17]
-    #dist_to_friend = np.round(np.sqrt(((x_my-x_friend)**2)+((y_my-y_friend)**2)), 1)
-    print('REC DATA:', message)
-    #color = (255,0,0)
-    #pygame.draw.rect(pyGame.screen, color,(xx1,yy1,20,20))
+    digit = 2 #Przybliżenie liczby 
 
+    gametime = np.round(message[0], digit)
+    XPawn, YPawn, ZPawn = np.round(message[1], digit),np.round(message[2], digit),np.round(message[3], digit) 
+    XPawnRadar, YPawnRadar = np.round(message[4], digit), np.round(message[5], digit)
+    XFoe, YFoe, ZFoe, IndexFoe = np.round(message[6], digit),np.round(message[7], digit),np.round(message[8], digit),np.round(message[9], digit)
+    XFriend, YFriend, ZFriend, IndexFriend = np.round(message[10], digit),np.round(message[11], digit),np.round(message[12], digit),np.round(message[13], digit)
+    XRoam, YRoam, ZRoam, IndexRoam = np.round(message[14], digit),np.round(message[15], digit),np.round(message[16], digit),np.round(message[17], digit)
+    
+    VectAB = [XPawnRadar - XPawn, YPawnRadar - YPawn]
+    VectAC = [XRoam - XPawn, YRoam - YPawn]
+    VectDot = np.dot(VectAB, VectAC)
+    
+    LenVectAB = np.sqrt(VectAB[0]**2 + VectAB[1]**2)
+    LenVectAC = np.sqrt(VectAC[0]**2 + VectAC[1]**2)
+        
+    Angle = np.degrees(np.arccos(VectDot/(LenVectAB*LenVectAC)))
+
+    print('XPawnRadar', XPawnRadar, 'YPawnRadar', YPawnRadar, 'xpawn', XPawn, 'ypawn', YPawn, 'xroam', XRoam, 'yroam', YRoam, 'indexroam', IndexRoam)
+    print('....\n')
+    print('Angle', Angle)
+    side = message[22]
+    print('Uint3', side)
+   
     pygame.display.update()
