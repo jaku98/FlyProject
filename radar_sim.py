@@ -90,7 +90,7 @@ class Object:
 
         return dist, angleAzy, angleEle, index      
 
-# Macierz przycisków FCR
+# Matrix of FCR buttons
 FCR_x_left = 34
 FCR_x_right = 562
 FCR_y_down = 569
@@ -192,19 +192,6 @@ while run:
     XFriend, YFriend, ZFriend, IndexFriend = message[11], message[12], message[13], message[14]
     XRoam, YRoam, ZRoam, IndexRoam = message[15], message[16], message[17], message[18]
     
-    # VectAB = [XPawnRadar - XPawn, YPawnRadar - YPawn]
-    # VectAC = [XRoam - XPawn, YRoam - YPawn]
-    # VectDot = np.dot(VectAB, VectAC)
-    
-    # LenVectAB = np.sqrt(VectAB[0]**2 + VectAB[1]**2)
-    # LenVectAC = np.sqrt(VectAC[0]**2 + VectAC[1]**2)
-    
-    # dist = np.sqrt((XRoam-XPawn)**2 + (YRoam-YPawn)**2)
-    # angle = np.degrees(np.arccos(VectDot/(LenVectAB*LenVectAC)))
-    # DotABC = XPawn*YPawnRadar + XPawnRadar*YRoam + XRoam*YPawn - XRoam*YPawnRadar - XPawn*YRoam - XPawnRadar*YPawn
-
-    # if DotABC < 0:
-    #     angle*=-1
 
     distFriend, angleAzyFriend, angleEleFriend, indexFriend = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFriend, YFriend, ZFriend, IndexFriend).calculate()
     distFoe, angleAzyFoe, angleEleFoe, indexFoe = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFoe, YFoe, ZFoe, IndexFoe).calculate()
