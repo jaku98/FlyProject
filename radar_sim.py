@@ -1,4 +1,5 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
+from turtle import ycor
 import unreal
 import pygame, sys
 import socket, struct, select
@@ -28,9 +29,9 @@ class UDPConnection:
 
 class Cockpit:
 
-    def __init__(self):
+    def __init__(self, x, y):
         pygame.init()
-        self.screen = pygame.display.set_mode((600, 600))
+        self.screen = pygame.display.set_mode((x, y))
         pygame.display.set_caption("RADAR Air to Air")
         self.cockpit_pic = pygame.image.load("pic/fcr_picb.png")
 
@@ -62,22 +63,21 @@ class Object:
         self.z = z
         self.index = index
 
-
     def calculate(self):
-        # Azymuth Angle
+        # Azimuth Angle from vectors
         VectAB = [self.xpradar - self.xpawn, self.ypradar - self.ypawn]
         VectAC = [self.x - self.xpawn, self.y - self.ypawn]
         VectDot = np.dot(VectAB, VectAC)
         LenVectAB = np.sqrt(VectAB[0]**2 + VectAB[1]**2)
         LenVectAC = np.sqrt(VectAC[0]**2 + VectAC[1]**2)
         dist = np.sqrt((self.x-self.xpawn)**2 + (self.y-self.ypawn)**2 + (self.z-self.zpawn)**2)
-        angleAzy = np.degrees(np.arccos(VectDot/(LenVectAB*LenVectAC)))
+        angleAzi = np.degrees(np.arccos(VectDot/(LenVectAB*LenVectAC)))
         DotABC = self.xpawn*self.ypradar + self.xpradar*self.y + self.x*self.ypawn - self.x*self.ypradar - self.xpawn*self.y - self.xpradar*self.ypawn
         index = self.index
-        if DotABC < 0:
-            angleAzy*=-1
+        if DotABC <= 0:  # Check on which side of the plane longitudinal axis vector
+            angleAzi*=-1 # if above *-1
 
-        # Elevation Angle
+        # Elevation Angle from vectors
         VectAD = [self.xpradar - self.xpawn, self.zpradar - self.zpawn] #
         VectAE = [self.x - self.xpawn, self.z - self.zpawn]
         VectDotD = np.dot(VectAD, VectAE)
@@ -85,10 +85,11 @@ class Object:
         LenVectAE = np.sqrt(VectAE[0]**2 + VectAE[1]**2)
         angleEle = np.degrees(np.arccos(VectDotD/(LenVectAD*LenVectAE)))
         DotABD = self.xpawn*self.zpradar + self.xpradar*self.z + self.z*self.zpawn - self.z*self.zpradar - self.xpawn*self.z - self.xpradar*self.zpawn
-        if DotABD < 0:
-            angleEle*=-1
+        if DotABD >= 0: # Check on which side of the plane longitudinal axis vector
+            angleEle*=-1 # if under *-1
 
-        return dist, angleAzy, angleEle, index      
+        return dist, angleAzi, angleEle, index
+
 
 # Matrix of FCR buttons
 FCR_x_left = 34
@@ -99,7 +100,20 @@ FCR_y_matrix = [435, 435-66, 435-2*66, 435-3*66, 435-4*66]
 FCR_x_matrix = [151, 151+73, 151+2*73, 151+3*73, 151+4*73]
 FCR_button = 20.0
 
-pyGame = Cockpit()
+
+# Radar search parametr and data
+scanElevation = 30
+scanAzimuth = 30
+objListFriend = np.zeros((10, 4), float)
+objListFoe = np.zeros((10, 4), float)
+objListRoam = np.zeros((10, 4), float)
+
+wWindow = 600
+hWindow = 600
+wFrame = 100
+pxScale = (wWindow-wFrame*4)/scanAzimuth # Scaling
+
+pyGame = Cockpit(wWindow, hWindow)
 myUDP = UDPConnection("127.0.0.1", 8000)
 myUDP.connect()
 i = 0
@@ -192,22 +206,21 @@ while run:
     XFriend, YFriend, ZFriend, IndexFriend = message[11], message[12], message[13], message[14]
     XRoam, YRoam, ZRoam, IndexRoam = message[15], message[16], message[17], message[18]
     
+    distFriend, angleAziFriend, angleEleFriend, indexFriend = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFriend, YFriend, ZFriend, IndexFriend).calculate()
+    distFoe, angleAziFoe, angleEleFoe, indexFoe = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFoe, YFoe, ZFoe, IndexFoe).calculate()
+    distRoam, angleAziRoam, angleEleRoam, indexRoam = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XRoam, YRoam, ZRoam, IndexRoam).calculate()
 
-    distFriend, angleAzyFriend, angleEleFriend, indexFriend = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFriend, YFriend, ZFriend, IndexFriend).calculate()
-    distFoe, angleAzyFoe, angleEleFoe, indexFoe = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFoe, YFoe, ZFoe, IndexFoe).calculate()
-    distRoam, angleAzyRoam, angleEleRoam, indexRoam = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XRoam, YRoam, ZRoam, IndexRoam).calculate()
-    print('....\n')
-    print('distTo', np.round((distFriend), 1), 'angleAzy', np.round((angleAzyFriend), 1), 'angleEle', np.round((angleEleFriend), 1), 'index', indexFriend)
-    print('distTo', np.round((distFoe), 1), 'angleAzy', np.round((angleAzyFoe), 1), 'angleEle', np.round((angleEleFoe), 1), 'index', indexFoe)
-    print('distTo', np.round((distRoam), 1), 'angleAzy', np.round((angleAzyRoam), 1), 'angleEle', np.round((angleEleRoam), 1), 'index', indexRoam)
     
+    objListRoam[0][indexRoam-1] = distRoam, objListRoam[0][indexRoam-1] = angleAziRoam, objListRoam[0][indexRoam-1] = angleEleRoam
 
-    # Drawing a rect
-    i+=0.5
-    pygame.draw.rect(pyGame.screen, (0, 255, 0),
-                 [100+i, 100+i, 50, 50], 2)
+    # Drawing a rect  
 
-    pygame.draw.rect(pyGame.screen, (255, 000, 0),
-                [275, 450-i, 50, 50], 2)
+    if -scanAzimuth<=angleAziFriend<=scanAzimuth and -scanElevation<=angleEleFriend<=scanElevation and indexFriend != 0:
+        pygame.draw.rect(pyGame.screen, (0, 255, 0),
+                    [wWindow/2+angleAziFriend*pxScale, hWindow/2+angleEleFriend*pxScale, 20, 20], 2)
+
+    if -scanAzimuth<=angleAziFoe<=scanAzimuth and -scanElevation<=angleEleFoe<=scanElevation and indexFoe != 0:
+        pygame.draw.rect(pyGame.screen, (255, 0, 0),
+                    [wWindow/2+angleAziFoe*pxScale, hWindow/2+angleEleFoe*pxScale, 20, 20], 2)
 
     pygame.display.update()
