@@ -1,25 +1,32 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
+from operator import index
+from time import sleep
+from turtle import distance
 import unreal
 import pygame, sys
-import socket, struct
+import socket, struct, select
 import numpy as np
-
 
 class UDPConnection:
 
     def __init__(self, udp_ip, udp_port):
         self.udp_ip = udp_ip #""
         self.udp_port = udp_port #8000
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
 
     def connect(self):
-        self.sock.bind((self.udp_ip, self.udp_port)) 
+        self.sock.bind((self.udp_ip, self.udp_port))
         print("UDP connection with UE4: OK!")
 
     def receive(self): 
         self.data, self.addr = self.sock.recvfrom(512) # buffer size
         self.data = struct.unpack("20f3c", self.data) # unpack data
         return self.data
+    
+    def close(self):
+        self.sock.close()
+        print("Closed")
+        exit()
 
 
 class Cockpit:
@@ -42,6 +49,36 @@ class Cockpit:
         self.circle_r = 10 # size
         pygame.draw.circle(self.screen, self.circle_c, event.pos, self.circle_r)
 
+
+class Object:
+
+    def __init__(self, xpawn, ypawn, zpawn, xpradar, ypradar, x, y, z, index):
+        self.xpawn = xpawn
+        self.ypawn = ypawn
+        self.zpawn = zpawn
+        self.xpradar = xpradar
+        self.ypradar = ypradar
+        self.x = x
+        self.y = y
+        self.z = z
+        self.index = index
+
+
+    def calculate(self):
+        VectAB = [self.xpradar - self.xpawn, self.ypradar - self.ypawn]
+        VectAC = [self.x - self.xpawn, self.y - self.ypawn]
+        VectDot = np.dot(VectAB, VectAC)
+        LenVectAB = np.sqrt(VectAB[0]**2 + VectAB[1]**2)
+        LenVectAC = np.sqrt(VectAC[0]**2 + VectAC[1]**2)
+        dist = np.sqrt((self.x-self.xpawn)**2 + (self.y-self.ypawn)**2)
+        angle = np.degrees(np.arccos(VectDot/(LenVectAB*LenVectAC)))
+        DotABC = self.xpawn*self.ypradar + self.xpradar*self.y + self.x*self.ypawn - self.x*self.ypradar - self.xpawn*self.y - self.xpradar*self.ypawn
+        index = self.index
+
+        if DotABC < 0:
+            angle*=-1
+        return dist, angle, index       
+
 # Macierz przycisków FCR
 FCR_x_left = 34
 FCR_x_right = 562
@@ -51,9 +88,9 @@ FCR_y_matrix = [435, 435-66, 435-2*66, 435-3*66, 435-4*66]
 FCR_x_matrix = [151, 151+73, 151+2*73, 151+3*73, 151+4*73]
 FCR_button = 20.0
 
+pyGame = Cockpit()
 myUDP = UDPConnection("127.0.0.1", 8000)
 myUDP.connect()
-pyGame = Cockpit()
 
 run = True
 # Pętla główna
@@ -136,30 +173,30 @@ while run:
         #         Cockpit.circle(mouse_pos)
 
         
-    
     # Przypisanie zmiennych z odebranej wiadomości
-    digit = 2 #Przybliżenie liczby 
-
-    gametime = np.round(message[0], digit)
-    XPawn, YPawn, ZPawn = np.round(message[1], digit),np.round(message[2], digit),np.round(message[3], digit) 
-    XPawnRadar, YPawnRadar = np.round(message[4], digit), np.round(message[5], digit)
-    XFoe, YFoe, ZFoe, IndexFoe = np.round(message[6], digit),np.round(message[7], digit),np.round(message[8], digit),np.round(message[9], digit)
-    XFriend, YFriend, ZFriend, IndexFriend = np.round(message[10], digit),np.round(message[11], digit),np.round(message[12], digit),np.round(message[13], digit)
-    XRoam, YRoam, ZRoam, IndexRoam = np.round(message[14], digit),np.round(message[15], digit),np.round(message[16], digit),np.round(message[17], digit)
+    gametime = message[0]
+    XPawn, YPawn, ZPawn = message[1], message[2], message[3]
+    XPawnRadar, YPawnRadar = message[4], message[5]
+    XFoe, YFoe, ZFoe, IndexFoe = message[6], message[7], message[8], message[9]
+    XFriend, YFriend, ZFriend, IndexFriend = message[10], message[11], message[12], message[13]
+    XRoam, YRoam, ZRoam, IndexRoam = message[14], message[15], message[16], message[17]
     
-    VectAB = [XPawnRadar - XPawn, YPawnRadar - YPawn]
-    VectAC = [XRoam - XPawn, YRoam - YPawn]
-    VectDot = np.dot(VectAB, VectAC)
+    # VectAB = [XPawnRadar - XPawn, YPawnRadar - YPawn]
+    # VectAC = [XRoam - XPawn, YRoam - YPawn]
+    # VectDot = np.dot(VectAB, VectAC)
     
-    LenVectAB = np.sqrt(VectAB[0]**2 + VectAB[1]**2)
-    LenVectAC = np.sqrt(VectAC[0]**2 + VectAC[1]**2)
-        
-    Angle = np.degrees(np.arccos(VectDot/(LenVectAB*LenVectAC)))
+    # LenVectAB = np.sqrt(VectAB[0]**2 + VectAB[1]**2)
+    # LenVectAC = np.sqrt(VectAC[0]**2 + VectAC[1]**2)
+    
+    # dist = np.sqrt((XRoam-XPawn)**2 + (YRoam-YPawn)**2)
+    # angle = np.degrees(np.arccos(VectDot/(LenVectAB*LenVectAC)))
+    # DotABC = XPawn*YPawnRadar + XPawnRadar*YRoam + XRoam*YPawn - XRoam*YPawnRadar - XPawn*YRoam - XPawnRadar*YPawn
 
-    print('XPawnRadar', XPawnRadar, 'YPawnRadar', YPawnRadar, 'xpawn', XPawn, 'ypawn', YPawn, 'xroam', XRoam, 'yroam', YRoam, 'indexroam', IndexRoam)
+    # if DotABC < 0:
+    #     angle*=-1
+
+    dist, angle, index = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, XRoam, YRoam, ZRoam, IndexRoam).calculate()
     print('....\n')
-    print('Angle', Angle)
-    side = message[22]
-    print('Uint3', side)
-   
+    print('dist', np.round((dist), 1), 'angle', np.round((angle), 1), 'index', np.round((index), 1))
+
     pygame.display.update()
