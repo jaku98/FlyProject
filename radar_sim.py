@@ -104,9 +104,9 @@ FCR_button = 20.0
 # Radar search parametr and data
 scanElevation = 30
 scanAzimuth = 30
-objListFriend = np.zeros((10, 4), float)
-objListFoe = np.zeros((10, 4), float)
-objListRoam = np.zeros((10, 4), float)
+objListFriend = np.zeros((10, 3), float)
+objListFoe = np.zeros((10, 3), float)
+objListRoam = np.zeros((10, 3), float)
 
 wWindow = 600
 hWindow = 600
@@ -209,15 +209,18 @@ while run:
     distFriend, angleAziFriend, angleEleFriend, indexFriend = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFriend, YFriend, ZFriend, IndexFriend).calculate()
     distFoe, angleAziFoe, angleEleFoe, indexFoe = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFoe, YFoe, ZFoe, IndexFoe).calculate()
     distRoam, angleAziRoam, angleEleRoam, indexRoam = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XRoam, YRoam, ZRoam, IndexRoam).calculate()
-
+    indexFriend = int(indexFriend)
     
-    objListRoam[0][indexRoam-1] = distRoam, objListRoam[0][indexRoam-1] = angleAziRoam, objListRoam[0][indexRoam-1] = angleEleRoam
-
+   
+    objListFriend[indexFriend][0] = distFriend
+    objListFriend[indexFriend][1] = angleAziFriend
+    objListFriend[indexFriend][2] = angleEleFriend
+    print('index', objListFriend[2][1])
     # Drawing a rect  
 
-    if -scanAzimuth<=angleAziFriend<=scanAzimuth and -scanElevation<=angleEleFriend<=scanElevation and indexFriend != 0:
+    if -scanAzimuth<=objListFriend[indexFriend][1]<=scanAzimuth and -scanElevation<=objListFriend[indexFriend][2]<=scanElevation and indexFriend != 0:
         pygame.draw.rect(pyGame.screen, (0, 255, 0),
-                    [wWindow/2+angleAziFriend*pxScale, hWindow/2+angleEleFriend*pxScale, 20, 20], 2)
+                    [wWindow/2+objListFriend[indexFriend][1]*pxScale, hWindow/2+objListFriend[indexFriend][2]*pxScale, 20, 20], 2)
 
     if -scanAzimuth<=angleAziFoe<=scanAzimuth and -scanElevation<=angleEleFoe<=scanElevation and indexFoe != 0:
         pygame.draw.rect(pyGame.screen, (255, 0, 0),
