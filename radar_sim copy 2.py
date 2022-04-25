@@ -3,6 +3,7 @@ from turtle import delay
 import pygame as pg
 import socket, struct, select, sys
 import numpy as np
+import gc
 
 class UDPConnection:
 
@@ -258,10 +259,16 @@ while run:
                                 [wWindow/2+objectsFriend[i][1]*pxScale, hWindow/2+objectsFriend[i][2]*pxScale, 20, 20], 2)
 
     del message
+    del XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFoe, YFoe, ZFoe, IndexFoe
+    del XFriend, YFriend, ZFriend, IndexFriend, XRoam, YRoam, ZRoam, IndexRoam
+    del allTargets, friendsTarget, foeTarget, roamTarget
     del dist1, angleAzi1, angleEle1, index1
     del dist2, angleAzi2, angleEle2, index2
     #del dist3, angleAzi3, angleEle3, index3
-    #del objectsFriend, objectsFoe, objectsRoam 
+    # del objectsFriend
+    # del objectsFoe
+    # del objectsRoam 
     pg.display.update()
-    pg.time.delay(1) 
+    pg.time.delay(1)
+    gc.collect() 
 
