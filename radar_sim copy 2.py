@@ -1,4 +1,5 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
+from turtle import delay
 import pygame as pg
 import socket, struct, select, sys
 import numpy as np
@@ -16,7 +17,7 @@ class UDPConnection:
 
     def receive(self): 
         self.data, self.addr = self.sock.recvfrom(512) # buffer size
-        self.data = struct.unpack("20f3c", self.data) # unpack data
+        self.data = struct.unpack("20f3b", self.data) # unpack data
         return self.data
     
     def close(self):
@@ -48,7 +49,7 @@ class Cockpit:
 
 
 class Object:
-    
+
     def __init__(self, xpawn, ypawn, zpawn, xpradar, ypradar, zpradar, x, y, z, index, scanEle, scanAzi):
         self.xpawn = xpawn
         self.ypawn = ypawn
@@ -63,6 +64,7 @@ class Object:
         self.scanEle = scanEle
         self.scanAzi = scanAzi
 
+
     def calculate(self):
         # Azimuth Angle from vectors
         self.VectAB = [self.xpradar - self.xpawn, self.ypradar - self.ypawn]
@@ -73,7 +75,6 @@ class Object:
         self.dist = np.sqrt((self.x-self.xpawn)**2 + (self.y-self.ypawn)**2 + (self.z-self.zpawn)**2)
         self.angleAzi = np.degrees(np.arccos(self.VectDot/(self.LenVectAB*self.LenVectAC)))
         self.DotABC = self.xpawn*self.ypradar + self.xpradar*self.y + self.x*self.ypawn - self.x*self.ypradar - self.xpawn*self.y - self.xpradar*self.ypawn
-        #index = self.index
         if self.DotABC <= 0:  # Check on which side of the plane longitudinal axis vector
             self.angleAzi*=-1 # if above *-1
 
@@ -87,10 +88,6 @@ class Object:
         self.DotABD = self.xpawn*self.zpradar + self.xpradar*self.z + self.z*self.zpawn - self.z*self.zpradar - self.xpawn*self.z - self.xpradar*self.zpawn
         if self.DotABD >= 0: # Check on which side of the plane longitudinal axis vector
             self.angleEle*=-1 # if under *-1
-       
-        # if -self.scanAzi<=self.angleAzi<=self.scanAzi and -self.scanEle<=self.angleEle<=self.scanEle and self.index != 0:
-        #     pg.draw.rect(wGame.screen, self.color,
-        #                 [wWindow/2+self.angleAzi*pxScale, hWindow/2+self.angleEle*pxScale, 20, 20], 2)            
 
         return self.dist, self.angleAzi, self.angleEle, self.index
 
@@ -110,7 +107,6 @@ scanAzimuth = 30
 colorFriend = (0,255,0)
 colorFoe = (255,0,0)
 colorRoam = (0,0,255)
-zeros = np.zeros((30,4))  #10,4
 
 wWindow = 600
 hWindow = 600
@@ -121,6 +117,10 @@ wGame = Cockpit(wWindow, hWindow)
 myUDP = UDPConnection("127.0.0.1", 8000)
 myUDP.connect()
 
+objectsFriend = np.zeros((10,5))
+objectsFoe = np.zeros((10,5))
+objectsRoam = np.zeros((10,5))
+
 run = True
 # Pętla główna
 while run:
@@ -128,7 +128,6 @@ while run:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False
-
     # graphic init
     wGame.cockpit()
     
@@ -205,47 +204,64 @@ while run:
     XPawnRadar, YPawnRadar, ZPawnRadar = message[4], message[5], message[6]
     XFoe, YFoe, ZFoe, IndexFoe = message[7], message[8], message[9], int(message[10])
     XFriend, YFriend, ZFriend, IndexFriend = message[11], message[12], message[13], int(message[14])
-    XRoam, YRoam, ZRoam, IndexRoam = message[15], message[16], message[17], int(message[18])
-    Targets = int(message[19])
-    
-    objectsFriend = zeros
-    # objectsFoe = zeros
-    # objectsRoam = zeros
+    XRoam, YRoam, ZRoam, IndexRoam = message[15], message[16], message[17], int(message[18]) 
+    allTargets, friendsTarget, foeTarget, roamTarget = int(message[19]), message[20], message[21], message[22]
 
+    if allTargets > 0:
+        # objects = np.zeros((allTargets,5))
+        # if friendsTarget > 0:
+        #     objectsFriend = np.zeros((friendsTarget,5))
+        # if foeTarget > 0:
+        #     objectsFoe = np.zeros((foeTarget,5))
+        # if roamTarget > 0:        
+        #     objectsRoam = np.zeros((roamTarget,5))
 
-    for i in range(Targets):
-        dist1, angleAzi1, angleEle1, index1 = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFriend, YFriend, ZFriend, IndexFriend, scanElevation, scanAzimuth).calculate()
-        objectsFriend[index1-1][0] = dist1
-        objectsFriend[index1-1][1] = angleAzi1
-        objectsFriend[index1-1][2] = angleEle1
-        objectsFriend[index1-1][3] = index1
-        if -scanAzimuth<=objectsFriend[i][1]<=scanAzimuth and -scanElevation<=objectsFriend[i][2]<=scanElevation and index1 != 0:
-                pg.draw.rect(wGame.screen, colorFriend,
-                            [wWindow/2+objectsFriend[i][1]*pxScale, hWindow/2+objectsFriend[i][2]*pxScale, 20, 20], 2)
+        #k = 10
 
-        dist2, angleAzi2, angleEle2, index2 = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFoe, YFoe, ZFoe, IndexFoe, scanElevation, scanAzimuth).calculate()
-        objectsFriend[index2+9][0] = dist2
-        objectsFriend[index2+9][1] = angleAzi2
-        objectsFriend[index2+9][2] = angleEle2
-        objectsFriend[index2+9][3] = index2
-        if -scanAzimuth<=objectsFriend[i+10][1]<=scanAzimuth and -scanElevation<=objectsFriend[i+10][2]<=scanElevation and index2 != 0:
-                pg.draw.rect(wGame.screen, colorFoe,
-                            [wWindow/2+objectsFriend[i+10][1]*pxScale, hWindow/2+objectsFriend[i+10][2]*pxScale, 20, 20], 2)
-
-        dist3, angleAzi3, angleEle3, index3 = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XRoam, YRoam, ZRoam, IndexRoam, scanElevation, scanAzimuth).calculate()
-        objectsFriend[index3+20][0] = dist3
-        objectsFriend[index3+20][1] = angleAzi3
-        objectsFriend[index3+20][2] = angleEle3
-        objectsFriend[index3+20][3] = index3
-        if -scanAzimuth<=objectsFriend[i+21][1]<=scanAzimuth and -scanElevation<=objectsFriend[i+21][2]<=scanElevation and index3 != 0:
-                pg.draw.rect(wGame.screen, colorRoam,
-                            [wWindow/2+objectsFriend[i+21][1]*pxScale, hWindow/2+objectsFriend[i+21][2]*pxScale, 20, 20], 2)
+        if friendsTarget > 0:
+            for i in range(friendsTarget):
+                dist1, angleAzi1, angleEle1, index1 = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFriend, YFriend, ZFriend, IndexFriend, scanElevation, scanAzimuth).calculate()
+                if index1 > 0:    
+                    objectsFriend[index1-1][0] = dist1
+                    objectsFriend[index1-1][1] = angleAzi1
+                    objectsFriend[index1-1][2] = angleEle1
+                    objectsFriend[index1-1][3] = index1
+                    objectsFriend[index1-1][4] = 1
+        if foeTarget > 0:        
+            for i in range(foeTarget):
+                dist2, angleAzi2, angleEle2, index2 = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFoe, YFoe, ZFoe, IndexFoe, scanElevation, scanAzimuth).calculate()
+                if index2 > 0: 
+                    objectsFoe[index2-1][0] = dist2
+                    objectsFoe[index2-1][1] = angleAzi2
+                    objectsFoe[index2-1][2] = angleEle2
+                    objectsFoe[index2-1][3] = index2
+                    objectsFoe[index2-1][4] = 2
+        if roamTarget > 0:
+            for i in range(roamTarget):
+                dist3, angleAzi3, angleEle3, index3 = Object(XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XRoam, YRoam, ZRoam, IndexRoam, scanElevation, scanAzimuth).calculate()
+                if index3 > 0: 
+                    objectsRoam[index3-1][0] = dist3
+                    objectsRoam[index3-1][1] = angleAzi3
+                    objectsRoam[index3-1][2] = angleEle3
+                    objectsRoam[index3-1][3] = index3
+                    objectsRoam[index3-1][4] = 3
+            
+        #objects = np.vstack((objectsFriend, objectsFoe))
+        #objects = np.vstack((objects, objectsRoam))
+        #print('friend',objectsFriend)
+        print('...\n')
+        print('foe',objectsFoe)
+        print('...\n')
+        for i in range(friendsTarget):
+            if -scanAzimuth<=objectsFriend[i][1]<=scanAzimuth and -scanElevation<=objectsFriend[i][2]<=scanElevation and objectsFriend[i][4] == 1:
+                    pg.draw.rect(wGame.screen, colorFriend,
+                                [wWindow/2+objectsFriend[i][1]*pxScale, hWindow/2+objectsFriend[i][2]*pxScale, 20, 20], 2)
 
     del message
     del dist1, angleAzi1, angleEle1, index1
     del dist2, angleAzi2, angleEle2, index2
-    del dist3, angleAzi3, angleEle3, index3
-    del objectsFriend#, objectsFoe, objectsRoam 
+    #del dist3, angleAzi3, angleEle3, index3
+    #del objectsFriend, objectsFoe, objectsRoam 
     pg.display.update()
     pg.time.delay(1) 
 
