@@ -3,6 +3,9 @@ import pygame as pg
 import socket, struct, select, sys, gc
 import numpy as np 
 
+pg.font.init()
+gc.collect()
+clock = pg.time.Clock()
 
 class UDPConnection:
 
@@ -32,13 +35,17 @@ class Cockpit:
         pg.init()
         self.screen = pg.display.set_mode((x, y))
         pg.display.set_caption("RADAR Air to Air")
-        self.cockpit_pic = pg.image.load("pic/fcr_picb.png")
+        #self.cockpit_pic = pg.image.load("pic/fcr_picb.png")
 
     def cockpit(self):
         self._x = 0
         self._y = 0
-        self.screen.blit(self.cockpit_pic,(self._x, self._y))
-
+        #self.screen.blit(self.cockpit_pic,(self._x, self._y))
+        self.screen.fill([0, 0, 0])
+        pg.draw.rect(self.screen, colorGrey0, [0, 0,600,600], 75)
+        pg.draw.rect(self.screen, colorGrey1, [70,70,460,460], 6, border_radius=10)
+        
+    
     # Czerwnone kółko po kliknięciu
     def circle(self, pos):
         self.pos = pos
@@ -67,34 +74,60 @@ class Object:
         # Azimuth Angle from vectors
         self.VectAB = [self.xpradar - self.xpawn, self.ypradar - self.ypawn]
         self.VectAC = [self.x - self.xpawn, self.y - self.ypawn]
-        self.VectDot = np.dot(self.VectAB, self.VectAC)
+        self.VectDotA = np.dot(self.VectAB, self.VectAC)
         self.LenVectAB = np.sqrt(self.VectAB[0]**2 + self.VectAB[1]**2)
         self.LenVectAC = np.sqrt(self.VectAC[0]**2 + self.VectAC[1]**2)
         self.dist = np.sqrt((self.x-self.xpawn)**2 + (self.y-self.ypawn)**2 + (self.z-self.zpawn)**2)
-        self.angleAzi = np.degrees(np.arccos(self.VectDot/(self.LenVectAB*self.LenVectAC)))
+        self.angleAzi = np.degrees(np.arccos(self.VectDotA/(self.LenVectAB*self.LenVectAC)))
         self.DotABC = (self.xpawn*self.ypradar + self.xpradar*self.y + self.x*self.ypawn
                         - self.x*self.ypradar - self.xpawn*self.y - self.xpradar*self.ypawn)
         if self.DotABC <= 0:  # Check on which side of the plane longitudinal axis vector
             self.angleAzi*=-1 # if above *-1
 
-        # Elevation Angle from vectors
-        self.VectAD = [self.xpradar - self.xpawn, self.zpradar - self.zpawn] #
-        self.VectAE = [self.x - self.xpawn, self.z - self.zpawn]
-        self.VectDotD = np.dot(self.VectAD, self.VectAE)
-        self.LenVectAD = np.sqrt(self.VectAD[0]**2 + self.VectAD[1]**2)
-        self.LenVectAE = np.sqrt(self.VectAE[0]**2 + self.VectAE[1]**2)
-        self.angleEle = np.degrees(np.arccos(self.VectDotD/(self.LenVectAD*self.LenVectAE)))
-        self.DotABD = (self.xpawn*self.zpradar + self.xpradar*self.z + self.x*self.zpawn 
-                        - self.x*self.zpradar - self.xpawn*self.z - self.xpradar*self.zpawn)
-        if self.DotABD >= 0: # Check on which side of the plane longitudinal axis vector
-            self.angleEle*=-1 # if under *-1
+        ##Elevation Angle from vectors
+        self.LenVectCCo = np.sqrt((self.zpradar-self.z)**2)
+        self.LenVectACo = np.sqrt((self.xpawn-self.x)**2 + (self.ypawn-self.y)**2 + (self.zpawn-self.z)**2) 
+        self.angleEle = np.degrees(np.arctan(self.LenVectCCo/self.LenVectACo))
 
         return self.dist, self.angleAzi, self.angleEle, self.index
 
+class Button:
 
+    colorHvr = [130, 130, 130]
+    colorClick = [250, 200, 0]
+    colorButton = [150, 150, 150]
+    widthButton = 40
+    heightButton = 40
 
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    
+    def draw(self):
+        global clicked
+        action = False
 
-# Matrix of FCR buttons
+        pos = pg.mouse.get_pos()
+
+        buttonRect = pg.rect(self.x, self.y, self.widthButton, self.heightButton)
+
+        if buttonRect.collidepoint(pos):
+            if pg.mouse.get_pressed()[0] == 1:
+                clicked = True
+                pg.draw.rect(wGame.screen, self.colorClick, buttonRect)
+            elif pg.mouse.get_pressed()[0] == 0 and clicked == True:
+                clicked = False
+                action = True
+            else:
+                pg.draw.rect(wGame.screen, self.colorHvr, buttonRect)
+        else:
+            pg.draw.rect(wGame.screen, self.colorButton, buttonRect)
+
+        pg.draw.line(wGame, [0,0,0], (self.x,self.y),(self.x+self.widthButton,self.y),2)
+        pg.draw.line(wGame, [0,0,0], (self.x,self.y),(self.x+self.y,self.heightButton),2)
+        pg.draw.line(wGame)
+
+# Matrix of FCR buttons https://www.youtube.com/watch?v=jyrP0dDGqgY
 FCR_x_left = 34
 FCR_x_right = 562
 FCR_y_down = 569
@@ -115,6 +148,67 @@ objectsFriend = np.zeros((10,5))
 objectsFoe = np.zeros((10,5))
 objectsRoam = np.zeros((10,5))
 indexDel = 0
+
+# GUI
+clicked = False
+fontSet = pg.font.SysFont("Arial", 18, bold=False)
+fontColorWhite = [255,255,255]
+fontColorBlack = [0,0,0]
+colorGrey0 = [40, 40, 40]
+colorGrey1 = [70, 70, 70]
+colorGrey2 = [100, 100, 100]
+
+textFCR = fontSet.render("FCR", False, fontColorWhite)
+textTGP = fontSet.render("TGP", False, fontColorWhite)
+textWPN = fontSet.render("WPN", False, fontColorWhite)
+textTFR = fontSet.render("TFR", False, fontColorWhite)
+textFLIR = fontSet.render("FLIR", False, fontColorWhite)
+
+textSMS = fontSet.render("SMS", False, fontColorWhite)
+textHSD = fontSet.render("HSD", False, fontColorWhite)
+textDTE = fontSet.render("DTE", False, fontColorWhite)
+textTEST = fontSet.render("TEST", False, fontColorWhite)
+textFLCS = fontSet.render("FLCS", False, fontColorWhite)
+
+textBLANK = fontSet.render("BLANK", False, fontColorBlack, fontColorWhite)
+textHAD = fontSet.render("HAD", False, fontColorWhite)
+textRCCE = fontSet.render("RCCE", False, fontColorWhite)
+textRESET = fontSet.render("RESET", False, fontColorWhite)
+
+textSWAP = fontSet.render("SWAP", False, fontColorWhite)
+textLABEL = fontSet.render("--------", False, fontColorWhite, fontColorWhite)
+textDTE = fontSet.render("DTE", False, fontColorWhite)
+
+buttonFCR = False
+
+def OpenMenu():
+    wGame.screen.blit(textFCR, [85, 160])
+    wGame.screen.blit(textTGP, [85, 230])
+    wGame.screen.blit(textTGP, [85, 295])
+    wGame.screen.blit(textWPN, [85, 360])
+    wGame.screen.blit(textFLIR, [85, 425])
+    
+    wGame.screen.blit(textSMS, [480, 160])
+    wGame.screen.blit(textHSD, [480, 230])
+    wGame.screen.blit(textDTE, [480, 295])
+    wGame.screen.blit(textTEST, [470, 360])
+    wGame.screen.blit(textFLCS, [470, 425])
+
+    wGame.screen.blit(textBLANK, [125, 80])
+    wGame.screen.blit(textHAD, [210, 80])
+    wGame.screen.blit(textRCCE, [350, 80])
+    wGame.screen.blit(textRESET, [415, 80])
+
+    wGame.screen.blit(textSWAP, [125, 500])
+    wGame.screen.blit(textLABEL, [210, 500])
+    wGame.screen.blit(textDTE, [350, 500])
+
+def FCRMenu():
+    pg.draw.rect(wGame.screen, fontColorWhite,[85, 85, 430, 430], 2)
+    i = 0
+
+
+
 
 def drawFriend(i):
     pg.draw.rect(wGame.screen, colorFriend,
@@ -139,7 +233,6 @@ wGame = Cockpit(wWindow, hWindow)
 myUDP = UDPConnection("127.0.0.1", 8000)
 myUDP.connect()
 
-gc.collect()
 run = True
 while run:
     # Ctrl + C to terminate
@@ -166,15 +259,16 @@ while run:
         # Lewa kolumna button FCR
         if  ((mouse_pos[0]-FCR_button)<FCR_x_left<(mouse_pos[0]+FCR_button)):
             if ((mouse_pos[1]-FCR_button)<FCR_y_matrix[0]<(mouse_pos[1]+FCR_button)):
-                click
+                print('5')
             if ((mouse_pos[1]-FCR_button)<FCR_y_matrix[1]<(mouse_pos[1]+FCR_button)):
-                click
+                print('4')
             if ((mouse_pos[1]-FCR_button)<FCR_y_matrix[2]<(mouse_pos[1]+FCR_button)):
-                click
+                print('3')
             if ((mouse_pos[1]-FCR_button)<FCR_y_matrix[3]<(mouse_pos[1]+FCR_button)):
-                click
+                print('2')
             if ((mouse_pos[1]-FCR_button)<FCR_y_matrix[4]<(mouse_pos[1]+FCR_button)):
-                click
+                print('1')
+                buttonFCR = True
         # # Prawa kolumna button FCR
         # if  ((mouse_pos[0]-FCR_button)<FCR_x_right<(mouse_pos[0]+FCR_button)):
         #     if ((mouse_pos[1]-FCR_button)<FCR_y_matrix[0]<(mouse_pos[1]+FCR_button)):
@@ -239,7 +333,6 @@ while run:
                     objectsFriend[index1-1][2] = angleEle1
                     objectsFriend[index1-1][3] = index1
                     objectsFriend[index1-1][4] = 1
-                    print(angleEle1) # sprawdzic ele i azi
 
         if foeTarget > 0:        
             for i in range(foeTarget):
@@ -265,19 +358,28 @@ while run:
                     objectsRoam[index3-1][3] = index3
                     objectsRoam[index3-1][4] = 3
 
+        if buttonFCR == True:
+            FCRMenu()
+
+            for i in range(friendsTarget):
+                if ((-scanAzimuth<=objectsFriend[i][1]<=scanAzimuth) and (-scanElevation<=objectsFriend[i][2]<=scanElevation) 
+                                                                    and (objectsFriend[i][4] == 1)):
+                        drawFriend(i)
+            for i in range(foeTarget):
+                if ((-scanAzimuth<=objectsFoe[i][1]<=scanAzimuth) and (-scanElevation<=objectsFoe[i][2]<=scanElevation) 
+                                                                and (objectsFoe[i][4] == 2)):
+                        drawFoe(i)
+            for i in range(roamTarget):
+                if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation) 
+                                                                and (objectsRoam[i][4] == 3)):
+                        drawRoam(i)
+
+        else:    
+            OpenMenu()
         # Draw    
-        for i in range(friendsTarget):
-            if ((-scanAzimuth<=objectsFriend[i][1]<=scanAzimuth) and (-scanElevation<=objectsFriend[i][2]<=scanElevation) 
-                                                                 and (objectsFriend[i][4] == 1)):
-                    drawFriend(i)
-        for i in range(foeTarget):
-            if ((-scanAzimuth<=objectsFoe[i][1]<=scanAzimuth) and (-scanElevation<=objectsFoe[i][2]<=scanElevation) 
-                                                              and (objectsFoe[i][4] == 2)):
-                    drawFoe(i)
-        for i in range(roamTarget):
-            if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation) 
-                                                               and (objectsRoam[i][4] == 3)):
-                    drawRoam(i)
+
+
+
 
     # Delete section
     del message
@@ -295,5 +397,6 @@ while run:
             del dist3, angleAzi3, angleEle3, index3 
         indexDel = 0
     indexDel += 1 
+
     pg.display.update()
     pg.time.delay(1)
