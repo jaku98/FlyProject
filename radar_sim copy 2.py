@@ -54,42 +54,56 @@ class Cockpit:
         pg.draw.circle(self.screen, self.circle_c, event.pos, self.circle_r)
 
 
-class Object:
+# class Object:
 
-    def __init__(self, xpawn, ypawn, zpawn, xpradar, ypradar, zpradar, x, y, z, index, scanEle, scanAzi):
-        self.xpawn = xpawn
-        self.ypawn = ypawn
-        self.zpawn = zpawn
-        self.xpradar = xpradar
-        self.ypradar = ypradar
-        self.zpradar = zpradar
-        self.x = x
-        self.y = y
-        self.z = z
-        self.index = index
-        self.scanEle = scanEle
-        self.scanAzi = scanAzi
+#     def __init__(self, xpawn, ypawn, zpawn, xpradar, ypradar, zpradar, x, y, z, index, scanEle, scanAzi):
+#         self.xpawn = xpawn
+#         self.ypawn = ypawn
+#         self.zpawn = zpawn
+#         self.xpradar = xpradar
+#         self.ypradar = ypradar
+#         self.zpradar = zpradar
+#         self.x = x
+#         self.y = y
+#         self.z = z
+#         self.index = index
+#         self.scanEle = scanEle
+#         self.scanAzi = scanAzi
 
-    def calculate(self):
-        # Azimuth Angle from vectors
-        self.VectAB = [self.xpradar - self.xpawn, self.ypradar - self.ypawn]
-        self.VectAC = [self.x - self.xpawn, self.y - self.ypawn]
-        self.VectDotA = np.dot(self.VectAB, self.VectAC)
-        self.LenVectAB = np.sqrt(self.VectAB[0]**2 + self.VectAB[1]**2)
-        self.LenVectAC = np.sqrt(self.VectAC[0]**2 + self.VectAC[1]**2)
-        self.dist = np.sqrt((self.x-self.xpawn)**2 + (self.y-self.ypawn)**2 + (self.z-self.zpawn)**2)
-        self.angleAzi = np.degrees(np.arccos(self.VectDotA/(self.LenVectAB*self.LenVectAC)))
-        self.DotABC = (self.xpawn*self.ypradar + self.xpradar*self.y + self.x*self.ypawn
-                        - self.x*self.ypradar - self.xpawn*self.y - self.xpradar*self.ypawn)
-        if self.DotABC <= 0:  # Check on which side of the plane longitudinal axis vector
-            self.angleAzi*=-1 # if above *-1
+#     def calculate(self):
+#         # Azimuth Angle from vectors
+#         self.aVectAB = [self.xpradar - self.xpawn, self.ypradar - self.ypawn]
+#         self.aVectAC = [self.x - self.xpawn, self.y - self.ypawn]
+#         self.aVectDot = np.dot(self.aVectAB, self.aVectAC)
+#         self.aLenVectAB = np.sqrt(self.aVectAB[0]**2 + self.aVectAB[1]**2)
+#         self.aLenVectAC = np.sqrt(self.aVectAC[0]**2 + self.aVectAC[1]**2)
+#         self.dist = np.sqrt((self.x-self.xpawn)**2 + (self.y-self.ypawn)**2 + (self.z-self.zpawn)**2)
+#         self.angleAzi = np.degrees(np.arccos(self.aVectDot/(self.aLenVectAB*self.aLenVectAC)))
+#         self.DotABC = (self.xpawn*self.ypradar + self.xpradar*self.y + self.x*self.ypawn
+#                         - self.x*self.ypradar - self.xpawn*self.y - self.xpradar*self.ypawn)
+#         if self.DotABC <= 0:  # Check on which side of the plane longitudinal axis vector
+#             self.angleAzi*=-1 # if above *-1
 
-        ##Elevation Angle from vectors
-        self.LenVectCCo = np.sqrt((self.zpradar-self.z)**2)
-        self.LenVectACo = np.sqrt((self.xpawn-self.x)**2 + (self.ypawn-self.y)**2 + (self.zpawn-self.z)**2) 
-        self.angleEle = np.degrees(np.arctan(self.LenVectCCo/self.LenVectACo))
+#         ##Elevation Angle from vectors
+#         # self.eVectAC = [self.x - self.xpawn, self.y - self.ypawn, self.z - self.zpawn]
+#         # self.eVectAC_ = [self.xpradar - self.xpawn, self.ypradar - self.ypawn, self.zpradar - self.zpradar]
+#         # self.eVectDot = np.dot(self.eVectAC, self.eVectAC_)
+#         # self.eLenVectAC = np.sqrt(self.eVectAC[0]**2 + self.eVectAC[1]**2 + self.eVectAC[2]**2)
+#         # self.eLenVectAC_ = np.sqrt(self.eVectAC_[0]**2 + self.eVectAC_[1]**2 + self.eVectAC_[2]**2)
 
-        return self.dist, self.angleAzi, self.angleEle, self.index
+#         # self.angleEle = np.degrees(np.arccos(self.eVectDot/(self.eLenVectAC*self.eLenVectAC_)))
+#         self.eVectAC = [self.x - self.xpawn, self.y - self.ypawn, self.z - self.zpawn]
+#         self.eVectAB = [self.xpradar - self.xpawn, self.ypradar - self.ypawn, self.zpradar - self.zpawn]
+#         self.eVectCB = [self.xpradar - self.x, self.ypradar- self.y, self.zpradar - self.z]
+#         self.eLenVectAC = np.sqrt(self.eVectAC[0]**2 + self.eVectAC[1]**2 + self.eVectAC[2]**2)
+#         self.eLenVectAB = np.sqrt(self.eVectAB[0]**2 + self.eVectAB[1]**2 + self.eVectAB[2]**2)
+#         self.eLenVectCB = np.sqrt(self.eVectCB[0]**2 + self.eVectCB[1]**2 + self.eVectCB[2]**2)
+#         self.licznik = self.eLenVectCB**2 - self.eLenVectAC**2 - self.eLenVectAB**2
+#         self.mianownik = -2 * self.eLenVectAC * self.eLenVectAB
+#         self.angleEle = np.degrees(np.arccos(self.licznik/self.mianownik))
+
+#         print(self.angleEle)
+#         return self.dist, self.angleAzi, self.angleEle, self.index
 
 class Button:
 
@@ -144,9 +158,9 @@ colorFriend = (0,255,0)
 colorFoe = (255,0,0)
 colorRoam = (0,0,255)
 
-objectsFriend = np.zeros((10,5))
-objectsFoe = np.zeros((10,5))
-objectsRoam = np.zeros((10,5))
+objectsFriend = np.zeros((10,6))
+objectsFoe = np.zeros((10,6))
+objectsRoam = np.zeros((10,6))
 indexDel = 0
 
 # GUI
@@ -211,13 +225,13 @@ def FCRMenu():
 
 
 def drawFriend(i):
-    pg.draw.rect(wGame.screen, colorFriend,
-                [wWindow/2+objectsFriend[i][1]*pxScale, hWindow/2+objectsFriend[i][2]*pxScale, 20, 20], 2)
+    pg.draw.circle(wGame.screen, colorFriend,
+                [wWindow/2+objectsFriend[i][1]*pxScale, hWindow/2+objectsFriend[i][2]*pxScale], 10, 2)
 def drawFoe(i):
     pg.draw.rect(wGame.screen, colorFoe,
                 [wWindow/2+objectsFoe[i][1]*pxScale, hWindow/2+objectsFoe[i][2]*pxScale, 20, 20], 2)
 def drawRoam(i):
-    pg.draw.rect(wGame.screen, colorRoam,
+    pg.draw.rect(wGame.screen, colorFoe,
                 [wWindow/2+objectsRoam[i][1]*pxScale, hWindow/2+objectsRoam[i][2]*pxScale, 20, 20], 2)
 
 
@@ -311,12 +325,13 @@ while run:
     message = myUDP.receive()
 
     # Receive section / Implementation of variable
-    gametime = message[0]
-    XPawn, YPawn, ZPawn = message[1], message[2], message[3]
-    XPawnRadar, YPawnRadar, ZPawnRadar = message[4], message[5], message[6]
-    XFoe, YFoe, ZFoe, IndexFoe = message[7], message[8], message[9], int(message[10])
-    XFriend, YFriend, ZFriend, IndexFriend = message[11], message[12], message[13], int(message[14])
-    XRoam, YRoam, ZRoam, IndexRoam = message[15], message[16], message[17], int(message[18]) 
+    altPawn = message[0]
+    distFriend, aziFriend, eleFriend = message[1], message[2], message[3]
+    angleToPawnFriend, altFriend, indexFriend = message[4], message[5], int(message[6])
+    distFoe, aziFoe, eleFoe = message[7], message[8], message[9]
+    angleToPawnFoe, altFoe, indexFoe = message[10], message[11], int(message[12])
+    distRoam, aziRoam, eleRoam = message[13], message[14], message[15]
+    angleToPawnRoam, altRoam, indexRoam = message[16], message[17], int(message[18])
     allTargets, friendsTarget, foeTarget, roamTarget = int(message[19]), message[20], message[21], message[22]
 
     if allTargets > 0:
@@ -324,54 +339,45 @@ while run:
         # Calculate
         if friendsTarget > 0:
             for i in range(friendsTarget):
-                dist1, angleAzi1, angleEle1, index1 = Object(XPawn, YPawn, ZPawn, 
-                        XPawnRadar, YPawnRadar, ZPawnRadar, XFriend, YFriend, ZFriend, 
-                        IndexFriend, scanElevation, scanAzimuth).calculate()
-                if index1 > 0:    
-                    objectsFriend[index1-1][0] = dist1
-                    objectsFriend[index1-1][1] = angleAzi1
-                    objectsFriend[index1-1][2] = angleEle1
-                    objectsFriend[index1-1][3] = index1
-                    objectsFriend[index1-1][4] = 1
+                if indexFriend > 0:    
+                    objectsFriend[indexFriend-1][0] = distFriend
+                    objectsFriend[indexFriend-1][1] = aziFriend
+                    objectsFriend[indexFriend-1][2] = eleFriend*-1
+                    objectsFriend[indexFriend-1][3] = angleToPawnFriend
+                    objectsFriend[indexFriend-1][4] = altFriend
+                    objectsFriend[indexFriend-1][5] = indexFriend
 
         if foeTarget > 0:        
             for i in range(foeTarget):
-                dist2, angleAzi2, angleEle2, index2 = Object(XPawn, YPawn, ZPawn, 
-                        XPawnRadar, YPawnRadar, ZPawnRadar, XFoe, YFoe, ZFoe, 
-                        IndexFoe, scanElevation, scanAzimuth).calculate()
-                if index2 > 0: 
-                    objectsFoe[index2-1][0] = dist2
-                    objectsFoe[index2-1][1] = angleAzi2
-                    objectsFoe[index2-1][2] = angleEle2
-                    objectsFoe[index2-1][3] = index2
-                    objectsFoe[index2-1][4] = 2
+                if indexFoe > 0: 
+                    objectsFoe[indexFoe-1][0] = distFoe
+                    objectsFoe[indexFoe-1][1] = aziFoe
+                    objectsFoe[indexFoe-1][2] = eleFoe*-1
+                    objectsFoe[indexFoe-1][3] = angleToPawnFoe
+                    objectsFoe[indexFoe-1][4] = altFoe
+                    objectsFoe[indexFoe-1][5] = indexFoe
 
         if roamTarget > 0:
             for i in range(roamTarget):
-                dist3, angleAzi3, angleEle3, index3 = Object(XPawn, YPawn, ZPawn, 
-                        XPawnRadar, YPawnRadar, ZPawnRadar, XRoam, YRoam, ZRoam, 
-                        IndexRoam, scanElevation, scanAzimuth).calculate()
-                if index3 > 0: 
-                    objectsRoam[index3-1][0] = dist3
-                    objectsRoam[index3-1][1] = angleAzi3
-                    objectsRoam[index3-1][2] = angleEle3
-                    objectsRoam[index3-1][3] = index3
-                    objectsRoam[index3-1][4] = 3
+                if indexRoam > 0: 
+                    objectsRoam[indexRoam-1][0] = distRoam
+                    objectsRoam[indexRoam-1][1] = aziRoam
+                    objectsRoam[indexRoam-1][2] = eleRoam*-1
+                    objectsRoam[indexRoam-1][3] = angleToPawnRoam
+                    objectsRoam[indexRoam-1][4] = altRoam
+                    objectsRoam[indexRoam-1][5] = indexRoam
 
         if buttonFCR == True:
             FCRMenu()
 
             for i in range(friendsTarget):
-                if ((-scanAzimuth<=objectsFriend[i][1]<=scanAzimuth) and (-scanElevation<=objectsFriend[i][2]<=scanElevation) 
-                                                                    and (objectsFriend[i][4] == 1)):
+                if ((-scanAzimuth<=objectsFriend[i][1]<=scanAzimuth) and (-scanElevation<=objectsFriend[i][2]<=scanElevation)):
                         drawFriend(i)
             for i in range(foeTarget):
-                if ((-scanAzimuth<=objectsFoe[i][1]<=scanAzimuth) and (-scanElevation<=objectsFoe[i][2]<=scanElevation) 
-                                                                and (objectsFoe[i][4] == 2)):
+                if ((-scanAzimuth<=objectsFoe[i][1]<=scanAzimuth) and (-scanElevation<=objectsFoe[i][2]<=scanElevation) ):
                         drawFoe(i)
             for i in range(roamTarget):
-                if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation) 
-                                                                and (objectsRoam[i][4] == 3)):
+                if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation)):
                         drawRoam(i)
 
         else:    
@@ -383,18 +389,16 @@ while run:
 
     # Delete section
     del message
-    del XPawn, YPawn, ZPawn, XPawnRadar, YPawnRadar, ZPawnRadar, XFoe, YFoe, ZFoe, IndexFoe
-    del XFriend, YFriend, ZFriend, IndexFriend, XRoam, YRoam, ZRoam, IndexRoam
-    
+
     if indexDel > 100:
         if allTargets > 0:
-            del allTargets, gametime    
+            del allTargets   
         if friendsTarget > 0:
-            del dist1, angleAzi1, angleEle1, index1   
+            del distFriend, aziFriend, eleFriend, angleToPawnFriend, altFriend, indexFriend, friendsTarget   
         if foeTarget > 0:
-            del dist2, angleAzi2, angleEle2, index2
+            del distFoe, aziFoe, eleFoe, angleToPawnFoe, altFoe, indexFoe, foeTarget
         if roamTarget > 0:  
-            del dist3, angleAzi3, angleEle3, index3 
+            del distRoam, aziRoam, eleRoam, angleToPawnRoam, altRoam, indexRoam, roamTarget 
         indexDel = 0
     indexDel += 1 
 
