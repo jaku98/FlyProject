@@ -186,9 +186,12 @@ scanDistanceCalc = 296
 scanAzi = 6
 clicksScanAzi = 0
 scanAziStep = 1
+
 scanEle = 0
 scanAziLeft = -60
 scanAziRight = 60
+xSearchAzi = 300
+xSearchAziStep = 2
 
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
@@ -315,8 +318,8 @@ def drawSearchAzi(xL, xP):
     pg.draw.line(wGame.screen, colorDBlue, (xP, 120),(xP, 495),2)
 
 def drawSearchIco(x):
-    pg.draw.line(wGame.screen, colorDBlue, (x, 490),(x, 495),3)
-    pg.draw.line(wGame.screen, colorDBlue, (x-2, 490),(x+2, 490),3)
+    pg.draw.line(wGame.screen, colorDBlue, (x, 490),(x, 500),4)
+    pg.draw.line(wGame.screen, colorDBlue, (x-6, 490),(x+6, 490),4)
   
 def drawFriend(i):
     x = wWindow/2+objectsFriend[i][1]*pxScaleAzi
@@ -496,6 +499,13 @@ while run:
                     objectsRoam[indexRoam-1][4] = altRoam
                     objectsRoam[indexRoam-1][5] = indexRoam
 
+
+        # Refresh variables
+        pxScaleDis = (hWindow-wFrame*2)/scanDistance
+        textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
+        textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
+        searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
+        searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
     
         if FCR == True:
             FCRMenu()
@@ -519,18 +529,19 @@ while run:
             if scanAzi < 6:
                 drawSearchAzi(searchAziLeft, searchAziRight)
 
-            #if searchAziLeft
+            xSearchAzi += xSearchAziStep
+            if xSearchAzi<=0:
+                xSearchAziStep = 2
+                
+            elif xSearchAzi>=600:
+                xSearchAziStep = -2
+            drawSearchIco(xSearchAzi)
 
         else:    
             OpenMenu()
             
 
-    # Refresh variables
-    pxScaleDis = (hWindow-wFrame*2)/scanDistance
-    textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
-    textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
-    searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
-    searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
+
 
 
     # Delete section
