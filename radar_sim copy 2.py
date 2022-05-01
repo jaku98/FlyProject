@@ -183,8 +183,12 @@ clicked = False
 FCR = False
 clickDis = 3
 scanDistanceCalc = 296
-scanAzi = 0
+scanAzi = 6
+clicksScanAzi = 0
+scanAziStep = 1
 scanEle = 0
+scanAziLeft = -60
+scanAziRight = 60
 
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
@@ -195,6 +199,7 @@ colorGrey0 = [30, 30, 30]
 colorGrey1 = [40, 40, 40]
 colorGrey2 = [70, 70, 70]
 colorGrey3 = [100, 100, 100]
+colorDBlue = [0, 30, 90]
 
 # Render text
 # Open menu
@@ -296,10 +301,23 @@ def FCRMenu():
 
     for i in range(7):
         if i == 3:
-            pg.draw.line(wGame.screen, fontColorWhite, (115, 210+35*i),(140, 210+35*i),2)
+            pg.draw.line(wGame.screen, fontColorWhite, (115, 195+35*i),(130, 195+35*i),2)
         else:
-            pg.draw.line(wGame.screen, fontColorWhite, (115, 210+35*i),(130, 210+35*i),2)
+            pg.draw.line(wGame.screen, fontColorWhite, (115, 195+35*i),(125, 195+35*i),2)
+    for i in range(7):
+        if i == 3:
+            pg.draw.line(wGame.screen, fontColorWhite, (200+35*i, 483),(200+35*i, 498),2)
+        else:
+            pg.draw.line(wGame.screen, fontColorWhite, (200+35*i, 488),(200+35*i, 498),2)
 
+def drawSearchAzi(xL, xP):
+    pg.draw.line(wGame.screen, colorDBlue, (xL, 120),(xL, 495),2)
+    pg.draw.line(wGame.screen, colorDBlue, (xP, 120),(xP, 495),2)
+
+def drawSearchIco(x):
+    pg.draw.line(wGame.screen, colorDBlue, (x, 490),(x, 495),3)
+    pg.draw.line(wGame.screen, colorDBlue, (x-2, 490),(x+2, 490),3)
+  
 def drawFriend(i):
     x = wWindow/2+objectsFriend[i][1]*pxScaleAzi
     y = (hWindow-wFrame)-objectsFriend[i][0]*pxScaleDis
@@ -350,7 +368,7 @@ while run:
     if Button1.draw():
         print('1')
         if FCR == True and clickDis<=2:
-            clickDis = clickDis + 1    
+            clickDis += 1    
             if clickDis == 3:
                 scanDistance = scanDistanceCalc
             elif clickDis == 2:
@@ -369,10 +387,26 @@ while run:
                 scanDistance = scanDistanceCalc/2
             elif clickDis == 1:
                 scanDistance = scanDistanceCalc/4             
-            clickDis = clickDis - 1
+            clickDis -= 1
     
     if Button3.draw():
         print('3') #azi
+        if FCR == True:
+            clicksScanAzi += 1              
+            if clicksScanAzi == 1:
+                scanAzi = 3
+                scanAziLeft = -30
+                scanAziRight = 30                
+            elif clicksScanAzi == 2:
+                scanAzi = 1
+                scanAziLeft = -10
+                scanAziRight = 10
+            else:
+                clicksScanAzi = 0
+                scanAzi = 6
+                scanAziLeft = -60
+                scanAziRight = 60
+                         
     if Button4.draw():
         print('4') # ele           
     if Button5.draw():
@@ -407,13 +441,15 @@ while run:
         print('19')
     if Button20.draw():
         print('20')
-
-    # if keys[pg.K_RIGHT]:
-    #     sky_x -= sky_step
-    # if keys[pg.K_LEFT]:
-    #     sky_x += sky_step
+    if keys[pg.K_RIGHT]:
+        if scanAziRight < 60:   
+            scanAziLeft += scanAziStep
+            scanAziRight += scanAziStep
+    if keys[pg.K_LEFT]:
+        if scanAziLeft > -60:
+            scanAziLeft -= scanAziStep
+            scanAziRight -= scanAziStep
     
-
     # Receive decoded message
     message = myUDP.receive()
 
@@ -460,36 +496,46 @@ while run:
                     objectsRoam[indexRoam-1][4] = altRoam
                     objectsRoam[indexRoam-1][5] = indexRoam
 
-  
+    
         if FCR == True:
             FCRMenu()
-            
             # Draw
             for i in range(friendsTarget):
                 if ((-scanAzimuth<=objectsFriend[i][1]<=scanAzimuth) and (-scanElevation<=objectsFriend[i][2]<=scanElevation)
                                                                      and (objectsFriend[i][0]<scanDistance)):
+                    if scanAziLeft<objectsFriend[i][1]<scanAziRight:
                         drawFriend(i)
             for i in range(foeTarget):
                 if ((-scanAzimuth<=objectsFoe[i][1]<=scanAzimuth) and (-scanElevation<=objectsFoe[i][2]<=scanElevation)
                                                                   and (objectsFoe[i][0]<scanDistance)):
+                    if scanAziLeft<objectsFoe[i][1]<scanAziRight:    
                         drawFoe(i)
             for i in range(roamTarget):
                 if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation)
                                                                    and (objectsRoam[i][0]<scanDistance)):
+                    if scanAziLeft<objectsRoam[i][1]<scanAziRight:
                         drawRoam(i)
+            
+            if scanAzi < 6:
+                drawSearchAzi(searchAziLeft, searchAziRight)
+
+            #if searchAziLeft
+
         else:    
             OpenMenu()
             
 
-    #refresh variables
+    # Refresh variables
     pxScaleDis = (hWindow-wFrame*2)/scanDistance
     textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
+    textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
+    searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
+    searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
 
 
     # Delete section
     del message
-
-    if indexDel > 100:
+    if indexDel > 10:
         if allTargets > 0:
             del allTargets   
         if friendsTarget > 0:
