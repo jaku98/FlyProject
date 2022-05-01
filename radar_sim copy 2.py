@@ -1,4 +1,5 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
+from email.policy import default
 import pygame as pg
 from pygame.locals import *
 import socket, struct, select, sys, gc
@@ -153,8 +154,6 @@ pxScaleAzi = (wWindow-wFrame*4)/scanAzimuth
 pxScaleDis = (hWindow-wFrame*2)/scanDistance
 
 # Buttons implementation
-clicked = False
-FCR = False
 Button1 = Button(10,140)
 Button2 = Button(10,210)
 Button3 = Button(10,280)
@@ -179,8 +178,17 @@ Button18 = Button(280,540)
 Button19 = Button(350,540)
 Button20 = Button(420,540)
 
+#Button variables
+clicked = False
+FCR = False
+clickDis = 3
+scanDistanceCalc = 296
+scanAzi = 0
+scanEle = 0
+
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
+fontDistSet = pg.font.SysFont("Arial", 16, bold=False)
 fontColorWhite = [255,255,255]
 fontColorBlack = [0,0,0]
 colorGrey0 = [30, 30, 30]
@@ -188,38 +196,53 @@ colorGrey1 = [40, 40, 40]
 colorGrey2 = [70, 70, 70]
 colorGrey3 = [100, 100, 100]
 
-
 # Render text
 # Open menu
+#LEFT
 textFCR = fontSet.render("FCR", False, fontColorWhite)
 textTGP = fontSet.render("TGP", False, fontColorWhite)
 textWPN = fontSet.render("WPN", False, fontColorWhite)
 textTFR = fontSet.render("TFR", False, fontColorWhite)
 textFLIR = fontSet.render("FLIR", False, fontColorWhite)
-
+#RIGHT
 textSMS = fontSet.render("SMS", False, fontColorWhite)
 textHSD = fontSet.render("HSD", False, fontColorWhite)
 textDTE = fontSet.render("DTE", False, fontColorWhite)
 textTEST = fontSet.render("TEST", False, fontColorWhite)
 textFLCS = fontSet.render("FLCS", False, fontColorWhite)
-
+#UP
 textBLANK = fontSet.render("BLANK", False, fontColorBlack, fontColorWhite)
 textHAD = fontSet.render("HAD", False, fontColorWhite)
 textRCCE = fontSet.render("RCCE", False, fontColorWhite)
 textRESET = fontSet.render("RESET", False, fontColorWhite)
-
+#DOWN
 textSWAP = fontSet.render("SWAP", False, fontColorWhite)
 textLABEL = fontSet.render("--------", False, fontColorWhite, fontColorWhite)
 textDTE = fontSet.render("DTE", False, fontColorWhite)
 
 # FCR Menu
-textCRM = fontSet.render("DTE", False, fontColorWhite)
-textRWS = fontSet.render("DTE", False, fontColorWhite)
-textNORM = fontSet.render("DTE", False, fontColorWhite)
-textOVRD = fontSet.render("DTE", False, fontColorWhite)
-textCNTL = fontSet.render("DTE", False, fontColorWhite)
+#UP
+textCRM = fontSet.render(" CRM ", False, fontColorWhite, fontColorBlack)
+textRWS = fontSet.render(" RWS ", False, fontColorWhite, fontColorBlack)
+textNORM = fontSet.render(" NORM ", False, fontColorWhite, fontColorBlack)
+textOVRD = fontSet.render(" OVRD ", False, fontColorWhite, fontColorBlack)
+textCNTL = fontSet.render(" CNTL ", False, fontColorWhite, fontColorBlack)
+#DOWN
+textSWAP = fontSet.render(" SWAP ", False, fontColorWhite, fontColorBlack)
+textFCR = fontSet.render(" FCR ", False, fontColorBlack, fontColorWhite)
+textTEST = fontSet.render(" TEST ", False, fontColorWhite, fontColorBlack)
+textDTE = fontSet.render(" DTE ", False, fontColorWhite, fontColorBlack)
+textDCLT = fontSet.render(" DCLT ", False, fontColorWhite, fontColorBlack)
+#RIGHT
+textCONT = fontSet.render("CONT", False, fontColorWhite, fontColorBlack)
+#LEFT
+textDist = fontSet.render(str(scanDistance), False, fontColorWhite)
+textAzi = fontSet.render('A', False, fontColorWhite)
+textEle = fontSet.render('B', False, fontColorWhite)
+textAziNum = fontSet.render(str(scanAzi), False, fontColorWhite)
+textEleNum = fontSet.render(str(scanEle), False, fontColorWhite)
 
-# Show text
+# Show text start menu
 def OpenMenu():
     wGame.screen.blit(textFCR, [85, 155])
     wGame.screen.blit(textTGP, [85, 225])
@@ -239,19 +262,50 @@ def OpenMenu():
     wGame.screen.blit(textRESET, [420, 80])
 
     wGame.screen.blit(textSWAP, [145, 500])
-    wGame.screen.blit(textLABEL, [215, 500])
+    wGame.screen.blit(textLABEL, [220, 500])
     wGame.screen.blit(textDTE, [360, 500])
 
+# Fcr menu
 def FCRMenu():
     pg.draw.rect(wGame.screen, fontColorWhite,[85, 85, 430, 430], 2)
+    pg.draw.rect(wGame.screen, fontColorBlack,[80, 165, 15, 75])
+    pg.draw.rect(wGame.screen, fontColorBlack,[80, 285, 15, 40])
+    pg.draw.rect(wGame.screen, fontColorBlack,[80, 355, 15, 40])
+    pg.draw.polygon(wGame.screen, fontColorWhite,[(95, 170), (110, 185), (80,185)], 2)
+    pg.draw.polygon(wGame.screen, fontColorWhite,[(95, 230), (110, 215), (80,215)], 2)    
+    
+    wGame.screen.blit(textDist, [85, 190])
+    wGame.screen.blit(textAzi, [80, 285])
+    wGame.screen.blit(textAziNum, [82, 302])
+    wGame.screen.blit(textEle, [80, 355])
+    wGame.screen.blit(textEleNum, [82, 372])
 
+    wGame.screen.blit(textCRM, [145, 80])
+    wGame.screen.blit(textRWS, [215, 80])
+    wGame.screen.blit(textNORM, [280, 80])
+    wGame.screen.blit(textOVRD, [350, 80])
+    wGame.screen.blit(textCNTL, [425, 80])
+
+    wGame.screen.blit(textSWAP, [145, 500])
+    wGame.screen.blit(textFCR, [220, 500])
+    wGame.screen.blit(textTEST, [285, 500])
+    wGame.screen.blit(textDTE, [360, 500])
+    wGame.screen.blit(textDCLT, [425, 500])
+
+    wGame.screen.blit(textCONT, [475, 190])
+
+    for i in range(7):
+        if i == 3:
+            pg.draw.line(wGame.screen, fontColorWhite, (115, 210+35*i),(140, 210+35*i),2)
+        else:
+            pg.draw.line(wGame.screen, fontColorWhite, (115, 210+35*i),(130, 210+35*i),2)
 
 def drawFriend(i):
     x = wWindow/2+objectsFriend[i][1]*pxScaleAzi
     y = (hWindow-wFrame)-objectsFriend[i][0]*pxScaleDis
     imageRot = pg.transform.rotate(arrayFriendImg[i], objectsFriend[i][3]*-1)    
     wGame.screen.blit(imageRot, [x, y])
-    textDistFriend = fontSet.render(str(int(objectsFriend[i][0])), False, colorFriend)
+    textDistFriend = fontDistSet.render(str(int(objectsFriend[i][0])), False, colorFriend)
     wGame.screen.blit(textDistFriend, [x+5, y+30])
 
 def drawFoe(i):
@@ -259,7 +313,7 @@ def drawFoe(i):
     y = (hWindow-wFrame)-objectsFoe[i][0]*pxScaleDis    
     imageRot = pg.transform.rotate(arrayFoeImg[i], objectsFoe[i][3]*-1)    
     wGame.screen.blit(imageRot, [x, y])
-    textDistFoe = fontSet.render(str(int(objectsFoe[i][0])), False, colorFoe)
+    textDistFoe = fontDistSet.render(str(int(objectsFoe[i][0])), False, colorFoe)
     wGame.screen.blit(textDistFoe, [x+5, y+30])
 
 def drawRoam(i):
@@ -267,7 +321,7 @@ def drawRoam(i):
     y = (hWindow-wFrame)-objectsRoam[i][0]*pxScaleDis
     imageRot = pg.transform.rotate(arrayRoamImg[i], objectsRoam[i][3]*-1)    
     wGame.screen.blit(imageRot, [x, y])
-    textDistRoam = fontSet.render(str(int(objectsRoam[i][0])), False, colorRoam)
+    textDistRoam = fontDistSet.render(str(int(objectsRoam[i][0])), False, colorRoam)
     wGame.screen.blit(textDistRoam, [x+5, y+30])
     
 # Init PyGame and UDP
@@ -295,13 +349,32 @@ while run:
 
     if Button1.draw():
         print('1')
-        FCR = True
+        if FCR == True and clickDis<=2:
+            clickDis = clickDis + 1    
+            if clickDis == 3:
+                scanDistance = scanDistanceCalc
+            elif clickDis == 2:
+                scanDistance = (scanDistanceCalc*3)/4
+            elif clickDis == 1:
+                scanDistance = scanDistanceCalc/2
+
+        if FCR == False:
+            FCR = True
     if Button2.draw():
         print('2')
+        if FCR == True and clickDis>0:    
+            if clickDis == 3:
+                scanDistance = (scanDistanceCalc*3)/4
+            elif clickDis == 2:
+                scanDistance = scanDistanceCalc/2
+            elif clickDis == 1:
+                scanDistance = scanDistanceCalc/4             
+            clickDis = clickDis - 1
+    
     if Button3.draw():
-        print('3')
+        print('3') #azi
     if Button4.draw():
-        print('4')                
+        print('4') # ele           
     if Button5.draw():
         print('5')
     if Button6.draw():
@@ -387,7 +460,7 @@ while run:
                     objectsRoam[indexRoam-1][4] = altRoam
                     objectsRoam[indexRoam-1][5] = indexRoam
 
-
+  
         if FCR == True:
             FCRMenu()
             
@@ -404,10 +477,14 @@ while run:
                 if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation)
                                                                    and (objectsRoam[i][0]<scanDistance)):
                         drawRoam(i)
-
         else:    
             OpenMenu()
             
+
+    #refresh variables
+    pxScaleDis = (hWindow-wFrame*2)/scanDistance
+    textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
+
 
     # Delete section
     del message
