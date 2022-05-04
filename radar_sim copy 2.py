@@ -199,21 +199,27 @@ scanAziStep = 1
 scanAziLeft = -scanAzimuth
 scanAziRight = scanAzimuth
 xSearchAzi = center
-xSearchAziStep = 2
+xSearchAziStep = 4
 xSearchAziStep_ = xSearchAziStep
 
 scanEle = 4
 clicksScanEle = 0
-scanEleUp = scanElevation/2 
+scanEleUp = scanElevation/2
+scanEleUp_ = scanEleUp/2
 scanEleDown = -scanElevation/2
+scanEleDown_ = scanEleDown
 scanEleStep = 1
 ySearchEle = center
 
 xScanAim = center
 yScanAim = center
+yScanAim_ = yScanAim
 scanAimStep = 3
 searchAimUp = wFrame
 searchAimDown = hWindow-wFrame
+aimUpRange = 0
+aimDownRange = 0
+aimDist = center
 
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
@@ -264,6 +270,9 @@ textAzi = fontSet.render('A', False, fontColorWhite)
 textEle = fontSet.render('B', False, fontColorWhite)
 textAziNum = fontSet.render(str(scanAzi), False, fontColorWhite)
 textEleNum = fontSet.render(str(scanEle), False, fontColorWhite)
+#AIM
+textaimUpRange = fontDistSet.render(str(aimUpRange), False, fontColorWhite)
+textaimDownRange = fontDistSet.render(str(aimDownRange), False, fontColorWhite)
 
 # Show text start menu
 def OpenMenu():
@@ -333,18 +342,23 @@ def drawSearchAzi(xL, xP):
     pg.draw.line(wGame.screen, colorDBlue, (xP, 120), (xP, 495), 2)
 
 def drawSearchAziIco(x):
+    i = 6 
     pg.draw.line(wGame.screen, colorDBlue, (x, 485), (x, 495), 4)
-    pg.draw.line(wGame.screen, colorDBlue, (x-6, 485), (x+6, 485), 4)
+    pg.draw.line(wGame.screen, colorDBlue, (x-i, 485), (x+i, 485), 4)
 
 def drawSearchEleIco(y):
+    i = 6
     pg.draw.line(wGame.screen, colorDBlue, (117, y), (127, y), 4)
-    pg.draw.line(wGame.screen, colorDBlue, (127, y-6), (127, y+6), 4)
+    pg.draw.line(wGame.screen, colorDBlue, (127, y-i), (127, y+i), 4)
 
 def drawAimIco(x, y):
     i = 12
     k = 10
+    j = 4
     pg.draw.line(wGame.screen, fontColorWhite, (x-k, y-i), (x-k, y+i), 2)
     pg.draw.line(wGame.screen, fontColorWhite, (x+k, y-i), (x+k, y+i), 2)
+    wGame.screen.blit(textaimUpRange, [x+k+j, y-4*j])
+    wGame.screen.blit(textaimDownRange, [x+k+j, y])
    
 def drawFriend(i):
     x = wWindow/2+objectsFriend[i][1]*pxScaleAzi
@@ -439,16 +453,17 @@ while run:
             if clicksScanEle == 1:
                 scanEle = 1
                 scanEleUp = 4.9/2
-                scanEleDown = -4.9/2                
+                scanEleDown = -4.9/2
             elif clicksScanEle == 2:
                 scanEle = 2
                 scanEleUp = 12/2
-                scanEleDown = -12/2 
+                scanEleDown = -12/2
             else:
                 clicksScanEle = 0
                 scanEle = 4
                 scanEleUp = 26.2/2
-                scanEleDown = -26.2/2 
+                scanEleDown = -26.2/2
+            scanEleUp_ = scanEleUp
     if Button5.draw():
         print('5')
     if Button6.draw():
@@ -496,10 +511,14 @@ while run:
         if scanEleUp < scanElevation:   
             scanEleUp += scanEleStep
             scanEleDown += scanEleStep
+            #scanEleUp_ -= scanEleStep
+            #scanEleDown_ -= scanEleStep
     if keys[pg.K_t]:
         if scanEleDown > -scanElevation:
             scanEleUp -= scanEleStep
             scanEleDown -= scanEleStep
+            #scanEleUp_ += scanEleStep
+            #scanEleDown_ + scanEleStep
     # Aim
     if keys[pg.K_RIGHT]:
         if xScanAim < searchAziRight:
@@ -510,9 +529,13 @@ while run:
     if keys[pg.K_UP]:
         if yScanAim > searchAimUp:
             yScanAim -= scanAimStep
+            #yScanAim_ += scanAimStep
+            #aimDist = yScanAim_/pxScaleDis
     if keys[pg.K_DOWN]:
         if yScanAim < searchAimDown:
             yScanAim += scanAimStep
+            #yScanAim_ -= scanAimStep
+            #aimDist = yScanAim_/pxScaleDis
 
     # Receive decoded message
     message = myUDP.receive()
@@ -561,15 +584,20 @@ while run:
                     objectsRoam[indexRoam-1][5] = indexRoam
 
 
-        # Refresh variables
+        # Refresh variables and text
         pxScaleDis = (hWindow-wFrame*2)/scanDistance
-        textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
-        textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
         searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
         searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
-        textEleNum = fontSet.render(str(round(scanEle)), False, fontColorWhite)
         searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
         searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
+        #aimUpRange = altPawn/100 + np.tan(np.deg2rad(scanEleUp_))*aimDist 
+        #aimDownRange = altPawn/100 + np.tan(np.deg2rad(scanEleUp_/2))*aimDist
+
+        textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
+        textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
+        textEleNum = fontSet.render(str(round(scanEle)), False, fontColorWhite)
+        textaimUpRange = fontDistSet.render(str(int(aimUpRange)), False, fontColorWhite)
+        textaimDownRange = fontDistSet.render(str(int(aimDownRange)), False, fontColorWhite)
 
 
         if FCR == True:
@@ -627,8 +655,6 @@ while run:
         else:    
             OpenMenu()
             
-
-
 
     # Delete section
     del message
