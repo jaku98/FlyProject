@@ -1,5 +1,4 @@
 # Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
-from email.policy import default
 import pygame as pg
 from pygame.locals import *
 import socket, struct, select, sys, gc
@@ -126,7 +125,7 @@ class Button:
 
 
 # Radar search parametr and data
-scanElevation = 60
+scanElevation = 26.2*2
 scanAzimuth = 60
 scanDistance = 296
 
@@ -158,6 +157,7 @@ indexDel = 0
 wWindow = 600
 hWindow = 600
 wFrame = 100
+center = 300
 pxScaleAzi = (wWindow-wFrame*4)/scanAzimuth
 pxScaleEle = (hWindow-wFrame*4)/scanElevation
 pxScaleDis = (hWindow-wFrame*2)/scanDistance
@@ -191,22 +191,29 @@ Button20 = Button(420,540)
 clicked = False
 FCR = False
 clickDis = 3
-scanDistanceCalc = scanDistance#296
+scanDistanceCalc = scanDistance
+
 scanAzi = 6
 clicksScanAzi = 0
 scanAziStep = 1
-scanAziLeft = -60
-scanAziRight = 60
-xSearchAzi = 300
+scanAziLeft = -scanAzimuth
+scanAziRight = scanAzimuth
+xSearchAzi = center
 xSearchAziStep = 2
 xSearchAziStep_ = xSearchAziStep
 
 scanEle = 4
 clicksScanEle = 0
-scanEleUp = 26.2/2 
-scanEleDown = -26.2/2
+scanEleUp = scanElevation/2 
+scanEleDown = -scanElevation/2
 scanEleStep = 1
-ySearchEle = 300
+ySearchEle = center
+
+xScanAim = center
+yScanAim = center
+scanAimStep = 3
+searchAimUp = wFrame
+searchAimDown = hWindow-wFrame
 
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
@@ -332,6 +339,12 @@ def drawSearchAziIco(x):
 def drawSearchEleIco(y):
     pg.draw.line(wGame.screen, colorDBlue, (117, y), (127, y), 4)
     pg.draw.line(wGame.screen, colorDBlue, (127, y-6), (127, y+6), 4)
+
+def drawAimIco(x, y):
+    i = 12
+    k = 10
+    pg.draw.line(wGame.screen, fontColorWhite, (x-k, y-i), (x-k, y+i), 2)
+    pg.draw.line(wGame.screen, fontColorWhite, (x+k, y-i), (x+k, y+i), 2)
    
 def drawFriend(i):
     x = wWindow/2+objectsFriend[i][1]*pxScaleAzi
@@ -379,7 +392,7 @@ while run:
     
     # event handling 
     keys = pg.key.get_pressed()
-
+    # button event
     if Button1.draw():
         print('1')
         if FCR == True and clickDis<=2:
@@ -468,22 +481,38 @@ while run:
         print('19')
     if Button20.draw():
         print('20')
-    if keys[pg.K_RIGHT]:
-        if scanAziRight < 60:   
+    # keyboard event
+    # Azi
+    if keys[pg.K_h]:
+        if scanAziRight < scanAzimuth:   
             scanAziLeft += scanAziStep
             scanAziRight += scanAziStep
-    if keys[pg.K_LEFT]:
-        if scanAziLeft > -60:
+    if keys[pg.K_f]:
+        if scanAziLeft > -scanAzimuth:
             scanAziLeft -= scanAziStep
             scanAziRight -= scanAziStep
-    if keys[pg.K_DOWN]:
-        if scanEleUp < 60:   
+    # Ele
+    if keys[pg.K_g]:
+        if scanEleUp < scanElevation:   
             scanEleUp += scanEleStep
             scanEleDown += scanEleStep
-    if keys[pg.K_UP]:
-        if scanEleDown > -60:
+    if keys[pg.K_t]:
+        if scanEleDown > -scanElevation:
             scanEleUp -= scanEleStep
             scanEleDown -= scanEleStep
+    # Aim
+    if keys[pg.K_RIGHT]:
+        if xScanAim < searchAziRight:
+            xScanAim += scanAimStep
+    if keys[pg.K_LEFT]:
+        if xScanAim > searchAziLeft:
+            xScanAim -= scanAimStep
+    if keys[pg.K_UP]:
+        if yScanAim > searchAimUp:
+            yScanAim -= scanAimStep
+    if keys[pg.K_DOWN]:
+        if yScanAim < searchAimDown:
+            yScanAim += scanAimStep
 
     # Receive decoded message
     message = myUDP.receive()
@@ -590,13 +619,14 @@ while run:
                     ySearchEle = searchEleDown 
                 elif indexDel == 99:
                     ySearchEle = (searchEleDown+searchEleUp)/2
-
             drawSearchEleIco(ySearchEle)
+            
+            # Draw aim ico 
+            drawAimIco(xScanAim, yScanAim)
 
         else:    
             OpenMenu()
             
-
 
 
 
