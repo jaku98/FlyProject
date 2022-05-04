@@ -126,12 +126,20 @@ class Button:
 
 
 # Radar search parametr and data
-scanElevation = 30
+scanElevation = 60
 scanAzimuth = 60
 scanDistance = 296
+
 colorFriend = (0,255,0) # Green
 colorFoe = (255,0,0) # Red
 colorRoam = (255,255,0) # Yellow
+fontColorWhite = [255,255,255] 
+fontColorBlack = [0,0,0]
+colorGrey0 = [30, 30, 30]
+colorGrey1 = [40, 40, 40]
+colorGrey2 = [70, 70, 70]
+colorGrey3 = [100, 100, 100]
+colorDBlue = [0, 30, 90]
 
 objectsFriend = np.zeros((10,6))
 objectsFoe = np.zeros((10,6))
@@ -151,6 +159,7 @@ wWindow = 600
 hWindow = 600
 wFrame = 100
 pxScaleAzi = (wWindow-wFrame*4)/scanAzimuth
+pxScaleEle = (hWindow-wFrame*4)/scanElevation
 pxScaleDis = (hWindow-wFrame*2)/scanDistance
 
 # Buttons implementation
@@ -182,27 +191,28 @@ Button20 = Button(420,540)
 clicked = False
 FCR = False
 clickDis = 3
-scanDistanceCalc = 296
+scanDistanceCalc = scanDistance#296
 scanAzi = 6
 clicksScanAzi = 0
 scanAziStep = 1
-
-scanEle = 0
 scanAziLeft = -60
 scanAziRight = 60
 xSearchAzi = 300
-xSearchAziStep = 2
+xSearchAziStep = 4
+xSearchAziStep_ = xSearchAziStep
+
+scanEle = 4
+clicksScanEle = 0
+scanEleUp = 26.2/2 #4 b # 12/2 - 2 b, 4.9/2 - 1 b
+scanEleDown = -26.2/2
+scanEleStep = 0.5
+ySearchEle = 300
+ySearchEleStep = 1
+ySearchEleStep_ = ySearchEleStep
 
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
 fontDistSet = pg.font.SysFont("Arial", 16, bold=False)
-fontColorWhite = [255,255,255]
-fontColorBlack = [0,0,0]
-colorGrey0 = [30, 30, 30]
-colorGrey1 = [40, 40, 40]
-colorGrey2 = [70, 70, 70]
-colorGrey3 = [100, 100, 100]
-colorDBlue = [0, 30, 90]
 
 # Render text
 # Open menu
@@ -314,13 +324,17 @@ def FCRMenu():
             pg.draw.line(wGame.screen, fontColorWhite, (200+35*i, 488),(200+35*i, 498),2)
 
 def drawSearchAzi(xL, xP):
-    pg.draw.line(wGame.screen, colorDBlue, (xL, 120),(xL, 495),2)
-    pg.draw.line(wGame.screen, colorDBlue, (xP, 120),(xP, 495),2)
+    pg.draw.line(wGame.screen, colorDBlue, (xL, 120), (xL, 495), 2)
+    pg.draw.line(wGame.screen, colorDBlue, (xP, 120), (xP, 495), 2)
 
-def drawSearchIco(x):
-    pg.draw.line(wGame.screen, colorDBlue, (x, 490),(x, 500),4)
-    pg.draw.line(wGame.screen, colorDBlue, (x-6, 490),(x+6, 490),4)
-  
+def drawSearchAziIco(x):
+    pg.draw.line(wGame.screen, colorDBlue, (x, 485), (x, 495), 4)
+    pg.draw.line(wGame.screen, colorDBlue, (x-6, 485), (x+6, 485), 4)
+
+def drawSearchEleIco(y):
+    pg.draw.line(wGame.screen, colorDBlue, (117, y), (127, y), 4)
+    pg.draw.line(wGame.screen, colorDBlue, (127, y-6), (127, y+6), 4)
+   
 def drawFriend(i):
     x = wWindow/2+objectsFriend[i][1]*pxScaleAzi
     y = (hWindow-wFrame)-objectsFriend[i][0]*pxScaleDis
@@ -378,7 +392,6 @@ while run:
                 scanDistance = (scanDistanceCalc*3)/4
             elif clickDis == 1:
                 scanDistance = scanDistanceCalc/2
-
         if FCR == False:
             FCR = True
     if Button2.draw():
@@ -390,10 +403,9 @@ while run:
                 scanDistance = scanDistanceCalc/2
             elif clickDis == 1:
                 scanDistance = scanDistanceCalc/4             
-            clickDis -= 1
-    
+            clickDis -= 1   
     if Button3.draw():
-        print('3') #azi
+        print('3')
         if FCR == True:
             clicksScanAzi += 1              
             if clicksScanAzi == 1:
@@ -408,10 +420,24 @@ while run:
                 clicksScanAzi = 0
                 scanAzi = 6
                 scanAziLeft = -60
-                scanAziRight = 60
-                         
+                scanAziRight = 60                       
     if Button4.draw():
-        print('4') # ele           
+        print('4')
+        if FCR == True:
+            clicksScanEle += 1              
+            if clicksScanEle == 1:
+                scanEle = 1
+                scanEleUp = 4.9/2
+                scanEleDown = -4.9/2                
+            elif clicksScanEle == 2:
+                scanEle = 2
+                scanEleUp = 12/2
+                scanEleDown = -12/2 
+            else:
+                clicksScanEle = 0
+                scanEle = 4
+                scanEleUp = 26.2/2
+                scanEleDown = -26.2/2 
     if Button5.draw():
         print('5')
     if Button6.draw():
@@ -452,7 +478,15 @@ while run:
         if scanAziLeft > -60:
             scanAziLeft -= scanAziStep
             scanAziRight -= scanAziStep
-    
+    if keys[pg.K_DOWN]:
+        if scanEleUp < 60:   
+            scanEleUp += scanEleStep
+            scanEleDown += scanEleStep
+    if keys[pg.K_UP]:
+        if scanEleDown > -60:
+            scanEleUp -= scanEleStep
+            scanEleDown -= scanEleStep
+
     # Receive decoded message
     message = myUDP.receive()
 
@@ -506,36 +540,51 @@ while run:
         textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
         searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
         searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
-    
+        textEleNum = fontSet.render(str(round(scanEle)), False, fontColorWhite)
+        searchEleDown = hWindow/2+scanEleDown*pxScaleEle
+        searchEleUp = hWindow/2+scanEleUp*pxScaleEle
+
+
         if FCR == True:
             FCRMenu()
-            # Draw
+            # Draw targets
             for i in range(friendsTarget):
                 if ((-scanAzimuth<=objectsFriend[i][1]<=scanAzimuth) and (-scanElevation<=objectsFriend[i][2]<=scanElevation)
                                                                      and (objectsFriend[i][0]<scanDistance)):
-                    if scanAziLeft<objectsFriend[i][1]<scanAziRight:
+                    if scanAziLeft<objectsFriend[i][1]<scanAziRight  and scanEleDown<objectsFriend[i][2]<scanEleUp:
                         drawFriend(i)
             for i in range(foeTarget):
                 if ((-scanAzimuth<=objectsFoe[i][1]<=scanAzimuth) and (-scanElevation<=objectsFoe[i][2]<=scanElevation)
                                                                   and (objectsFoe[i][0]<scanDistance)):
-                    if scanAziLeft<objectsFoe[i][1]<scanAziRight:    
+                    if scanAziLeft<objectsFoe[i][1]<scanAziRight and scanEleDown<objectsFoe[i][2]<scanEleUp:    
                         drawFoe(i)
             for i in range(roamTarget):
                 if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation)
                                                                    and (objectsRoam[i][0]<scanDistance)):
-                    if scanAziLeft<objectsRoam[i][1]<scanAziRight:
+                    if scanAziLeft<objectsRoam[i][1]<scanAziRight and scanEleDown<objectsRoam[i][2]<scanEleUp:
                         drawRoam(i)
             
+            # Draw search azimuth lines
             if scanAzi < 6:
                 drawSearchAzi(searchAziLeft, searchAziRight)
 
+            # Draw antenna search ico
             xSearchAzi += xSearchAziStep
-            if xSearchAzi<=0:
-                xSearchAziStep = 2
+            if xSearchAzi<=searchAziLeft:
+                xSearchAziStep = xSearchAziStep_
                 
-            elif xSearchAzi>=600:
-                xSearchAziStep = -2
-            drawSearchIco(xSearchAzi)
+            elif xSearchAzi>=searchAziRight:
+                xSearchAziStep = -xSearchAziStep_
+            drawSearchAziIco(xSearchAzi)
+
+
+            ySearchEle += ySearchEleStep
+            if ySearchEle<=searchEleDown:
+                ySearchEleStep = ySearchEleStep_
+                
+            elif ySearchEle>=searchEleUp:
+                ySearchEleStep = -ySearchEleStep_
+            drawSearchEleIco(ySearchEle)
 
         else:    
             OpenMenu()
