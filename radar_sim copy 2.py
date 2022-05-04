@@ -139,7 +139,7 @@ colorGrey0 = [30, 30, 30]
 colorGrey1 = [40, 40, 40]
 colorGrey2 = [70, 70, 70]
 colorGrey3 = [100, 100, 100]
-colorDBlue = [0, 30, 90]
+colorDBlue = [0, 125, 240]
 
 objectsFriend = np.zeros((10,6))
 objectsFoe = np.zeros((10,6))
@@ -198,17 +198,15 @@ scanAziStep = 1
 scanAziLeft = -60
 scanAziRight = 60
 xSearchAzi = 300
-xSearchAziStep = 4
+xSearchAziStep = 2
 xSearchAziStep_ = xSearchAziStep
 
 scanEle = 4
 clicksScanEle = 0
-scanEleUp = 26.2/2 #4 b # 12/2 - 2 b, 4.9/2 - 1 b
+scanEleUp = 26.2/2 
 scanEleDown = -26.2/2
-scanEleStep = 0.5
+scanEleStep = 1
 ySearchEle = 300
-ySearchEleStep = 1
-ySearchEleStep_ = ySearchEleStep
 
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
@@ -541,8 +539,8 @@ while run:
         searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
         searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
         textEleNum = fontSet.render(str(round(scanEle)), False, fontColorWhite)
-        searchEleDown = hWindow/2+scanEleDown*pxScaleEle
-        searchEleUp = hWindow/2+scanEleUp*pxScaleEle
+        searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
+        searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
 
 
         if FCR == True:
@@ -568,7 +566,7 @@ while run:
             if scanAzi < 6:
                 drawSearchAzi(searchAziLeft, searchAziRight)
 
-            # Draw antenna search ico
+            # Draw antenna search azi ico
             xSearchAzi += xSearchAziStep
             if xSearchAzi<=searchAziLeft:
                 xSearchAziStep = xSearchAziStep_
@@ -577,13 +575,22 @@ while run:
                 xSearchAziStep = -xSearchAziStep_
             drawSearchAziIco(xSearchAzi)
 
+            # Draw antenna search ele ico
+            if scanEle == 1:
+                ySearchEle = (searchEleDown+searchEleUp)/2
+            elif scanEle == 2:
+                if indexDel == 50:
+                    ySearchEle = searchEleUp
+                elif indexDel == 100:
+                    ySearchEle = searchEleDown 
+            else:
+                if indexDel == 33:
+                    ySearchEle = searchEleUp
+                elif indexDel == 66:
+                    ySearchEle = searchEleDown 
+                elif indexDel == 99:
+                    ySearchEle = (searchEleDown+searchEleUp)/2
 
-            ySearchEle += ySearchEleStep
-            if ySearchEle<=searchEleDown:
-                ySearchEleStep = ySearchEleStep_
-                
-            elif ySearchEle>=searchEleUp:
-                ySearchEleStep = -ySearchEleStep_
             drawSearchEleIco(ySearchEle)
 
         else:    
@@ -595,7 +602,7 @@ while run:
 
     # Delete section
     del message
-    if indexDel > 10:
+    if indexDel > 100:
         if allTargets > 0:
             del allTargets   
         if friendsTarget > 0:
