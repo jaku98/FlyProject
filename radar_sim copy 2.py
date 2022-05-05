@@ -511,14 +511,14 @@ while run:
         if scanEleUp < scanElevation:   
             scanEleUp += scanEleStep
             scanEleDown += scanEleStep
-            #scanEleUp_ -= scanEleStep
-            #scanEleDown_ -= scanEleStep
+            scanEleUp_ -= scanEleStep
+            scanEleDown_ -= scanEleStep
     if keys[pg.K_t]:
         if scanEleDown > -scanElevation:
             scanEleUp -= scanEleStep
             scanEleDown -= scanEleStep
-            #scanEleUp_ += scanEleStep
-            #scanEleDown_ + scanEleStep
+            scanEleUp_ += scanEleStep
+            scanEleDown_ + scanEleStep
     # Aim
     if keys[pg.K_RIGHT]:
         if xScanAim < searchAziRight:
@@ -529,13 +529,12 @@ while run:
     if keys[pg.K_UP]:
         if yScanAim > searchAimUp:
             yScanAim -= scanAimStep
-            #yScanAim_ += scanAimStep
-            #aimDist = yScanAim_/pxScaleDis
+            yScanAim_ += scanAimStep
     if keys[pg.K_DOWN]:
         if yScanAim < searchAimDown:
             yScanAim += scanAimStep
-            #yScanAim_ -= scanAimStep
-            #aimDist = yScanAim_/pxScaleDis
+            yScanAim_ -= scanAimStep
+            
 
     # Receive decoded message
     message = myUDP.receive()
@@ -590,8 +589,15 @@ while run:
         searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
         searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
         searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
-        #aimUpRange = altPawn/100 + np.tan(np.deg2rad(scanEleUp_))*aimDist 
-        #aimDownRange = altPawn/100 + np.tan(np.deg2rad(scanEleUp_/2))*aimDist
+        aimDist = yScanAim_/pxScaleDis
+
+        if scanEleUp_ < 0:
+            aimUpRange = -1 * 2*(-scanEleUp_/360)*np.pi*aimDist
+        elif scanEleDown_ < 0:
+            aimDownRange = -1 * 2*(-scanEleDown_/360)*np.pi*aimDist
+        else:
+            aimUpRange = 2*(scanEleUp_/360)*np.pi*aimDist
+            aimDownRange = 2*(scanEleDown_/360)*np.pi*aimDist
 
         textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
         textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
