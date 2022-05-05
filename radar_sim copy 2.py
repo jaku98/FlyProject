@@ -513,12 +513,16 @@ while run:
             scanEleDown += scanEleStep
             scanEleUp_ -= scanEleStep
             scanEleDown_ -= scanEleStep
+            print('scanEleUp_', scanEleUp_)
+            print('scanEleDown_', scanEleDown_)
     if keys[pg.K_t]:
         if scanEleDown > -scanElevation:
             scanEleUp -= scanEleStep
             scanEleDown -= scanEleStep
             scanEleUp_ += scanEleStep
-            scanEleDown_ + scanEleStep
+            scanEleDown_ += scanEleStep
+            print('scanEleUp_', scanEleUp_)
+            print('scanEleDown_', scanEleDown_)
     # Aim
     if keys[pg.K_RIGHT]:
         if xScanAim < searchAziRight:
@@ -592,11 +596,12 @@ while run:
         aimDist = yScanAim_/pxScaleDis
 
         if scanEleUp_ < 0:
-            aimUpRange = -1 * 2*(-scanEleUp_/360)*np.pi*aimDist
-        elif scanEleDown_ < 0:
-            aimDownRange = -1 * 2*(-scanEleDown_/360)*np.pi*aimDist
-        else:
+            aimUpRange = -1*(2*(-scanEleUp_/360)*np.pi*aimDist)
+        if scanEleDown_ < 0:
+            aimDownRange = -1*(2*(-scanEleDown_/360)*np.pi*aimDist)
+        if scanEleUp_ >= 0:
             aimUpRange = 2*(scanEleUp_/360)*np.pi*aimDist
+        if scanEleDown_ >= 0:    
             aimDownRange = 2*(scanEleDown_/360)*np.pi*aimDist
 
         textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
