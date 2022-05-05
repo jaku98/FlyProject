@@ -207,7 +207,7 @@ clicksScanEle = 0
 scanEleUp = scanElevation/2
 scanEleUp_ = scanEleUp/2
 scanEleDown = -scanElevation/2
-scanEleDown_ = scanEleDown
+scanEleDown_ = scanEleDown/2
 scanEleStep = 1
 ySearchEle = center
 
@@ -464,6 +464,7 @@ while run:
                 scanEleUp = 26.2/2
                 scanEleDown = -26.2/2
             scanEleUp_ = scanEleUp
+            scanEleDown_ = scanEleDown
     if Button5.draw():
         print('5')
     if Button6.draw():
@@ -609,7 +610,6 @@ while run:
         textEleNum = fontSet.render(str(round(scanEle)), False, fontColorWhite)
         textaimUpRange = fontDistSet.render(str(int(aimUpRange)), False, fontColorWhite)
         textaimDownRange = fontDistSet.render(str(int(aimDownRange)), False, fontColorWhite)
-
 
         if FCR == True:
             FCRMenu()
