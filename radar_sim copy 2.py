@@ -385,8 +385,8 @@ def drawRoam(i):
     wGame.screen.blit(textDistRoam, [x+5, y+30])
     
 # Init PyGame and UDP
-#run = input('Is simulation enabled to start? y/n: \n')
-run = 'y'
+run = input('Is simulation enabled to start? y/n: \n')
+#run = 'y'
 if run == 'y':
     run = True
     wGame = Cockpit(wWindow, hWindow)
@@ -542,6 +542,7 @@ while run:
             
 
     # Receive decoded message
+
     message = myUDP.receive()
 
     # Receive section / Implementation of variable
