@@ -195,11 +195,11 @@ scanDistanceCalc = scanDistance
 
 scanAzi = 6
 clicksScanAzi = 0
-scanAziStep = 1
+scanAziStep = 2
 scanAziLeft = -scanAzimuth
 scanAziRight = scanAzimuth
 xSearchAzi = center
-xSearchAziStep = 4
+xSearchAziStep = 10
 xSearchAziStep_ = xSearchAziStep
 
 scanEle = 4
@@ -214,12 +214,13 @@ ySearchEle = center
 xScanAim = center
 yScanAim = center
 yScanAim_ = yScanAim
-scanAimStep = 3
+scanAimStep = 5
 searchAimUp = wFrame
 searchAimDown = hWindow-wFrame
 aimUpRange = 0
 aimDownRange = 0
 aimDist = center
+aimNorm = 260 / 18.5 # Max upper altitude (in radar)/ reality altitude (80.000 ft - 18.5 km)
 
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
@@ -324,7 +325,7 @@ def FCRMenu():
     wGame.screen.blit(textDTE, [360, 500])
     wGame.screen.blit(textDCLT, [425, 500])
 
-    wGame.screen.blit(textCONT, [475, 190])
+    wGame.screen.blit(textCONT, [475, 155])
 
     for i in range(7):
         if i == 3:
@@ -336,6 +337,9 @@ def FCRMenu():
             pg.draw.line(wGame.screen, fontColorWhite, (200+35*i, 483),(200+35*i, 498),2)
         else:
             pg.draw.line(wGame.screen, fontColorWhite, (200+35*i, 488),(200+35*i, 498),2)
+    for i in range(3):
+        pg.draw.line(wGame.screen, colorDBlue, (490, 200+100*i),(512, 200+100*i),2)
+
 
 def drawSearchAzi(xL, xP):
     pg.draw.line(wGame.screen, colorDBlue, (xL, 120), (xL, 495), 2)
@@ -385,8 +389,8 @@ def drawRoam(i):
     wGame.screen.blit(textDistRoam, [x+5, y+30])
     
 # Init PyGame and UDP
-run = input('Is simulation enabled to start? y/n: \n')
-#run = 'y'
+#run = input('Is simulation enabled to start? y/n: \n')
+run = 'y'
 if run == 'y':
     run = True
     wGame = Cockpit(wWindow, hWindow)
@@ -514,16 +518,12 @@ while run:
             scanEleDown += scanEleStep
             scanEleUp_ -= scanEleStep
             scanEleDown_ -= scanEleStep
-            print('scanEleUp_', scanEleUp_)
-            print('scanEleDown_', scanEleDown_)
     if keys[pg.K_t]:
         if scanEleDown > -scanElevation:
             scanEleUp -= scanEleStep
             scanEleDown -= scanEleStep
             scanEleUp_ += scanEleStep
             scanEleDown_ += scanEleStep
-            print('scanEleUp_', scanEleUp_)
-            print('scanEleDown_', scanEleDown_)
     # Aim
     if keys[pg.K_RIGHT]:
         if xScanAim < searchAziRight:
@@ -557,7 +557,7 @@ while run:
 
     if allTargets > 0:
 
-        # Calculate
+        # Calculate and save variables
         if friendsTarget > 0:
             for i in range(friendsTarget):
                 if indexFriend > 0:    
@@ -609,8 +609,8 @@ while run:
         textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
         textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
         textEleNum = fontSet.render(str(round(scanEle)), False, fontColorWhite)
-        textaimUpRange = fontDistSet.render(str(int(aimUpRange)), False, fontColorWhite)
-        textaimDownRange = fontDistSet.render(str(int(aimDownRange)), False, fontColorWhite)
+        textaimUpRange = fontDistSet.render(str(int(aimUpRange/aimNorm)), False, fontColorWhite)
+        textaimDownRange = fontDistSet.render(str(int(aimDownRange/aimNorm)), False, fontColorWhite)
 
         if FCR == True:
             FCRMenu()
