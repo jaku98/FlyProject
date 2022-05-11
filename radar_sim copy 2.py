@@ -161,10 +161,6 @@ arrayFriendImg = [imageFriend]*10
 arrayFoeImg = [imageFoe]*10
 arrayRoamImg = [imageRoam]*10
 indexDel = 0
-x = 0
-y = 0
-xLast = 0
-yLast = 0
 
 
 # ///GUI///
@@ -734,7 +730,6 @@ while run:
         # Draw search azimuth lines
         if scanAzi < 6:
             drawSearchAzi(searchAziLeft, searchAziRight)
-
         # Draw antenna search azi ico
         if msTimeBarAzi < barAziMove:
             xSearchAzi += xSearchAziStep
@@ -767,11 +762,8 @@ while run:
             drawSearchEleIco(ySearchEle)
         else:
             msTimeBarAzi = 0
-
-       
         # Draw aim ico 
         drawAimIco(xScanAim, yScanAim)
-
     else:    
         OpenMenu()
             
