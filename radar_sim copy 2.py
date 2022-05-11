@@ -216,18 +216,17 @@ xSearchAziStep = barAziMove/(hWindow-wFrame*2)
 xSearchAziStep_ = xSearchAziStep
 searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
 searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
-
+dweelTime = (hWindow-wFrame*2)/dweelTime
 scanEle = 4
 clicksScanEle = 0
-scanEleUp = scanElevation/2
+scanEleUp = scanElevation/4
 scanEleUp_ = scanEleUp/2
-scanEleDown = -scanElevation/2
+scanEleDown = -scanElevation/4
 scanEleDown_ = scanEleDown/2
 scanEleStep = 1
 ySearchEle = center
 searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
 searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
-
 
 xScanAim = center
 yScanAim = center
@@ -238,7 +237,8 @@ searchAimDown = hWindow-wFrame
 aimUpRange = 0
 aimDownRange = 0
 aimDist = center
-aimNorm = 260 / 18.5 # Max upper altitude (in radar)/ reality altitude (80.000 ft - 18.5 km)
+aimNorm = 260 / 18.5 # Max upper altitude (in radar)/ reality altitude (80.000 ft - 18.5 km) #Documentation
+aimLogic = False
 
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
@@ -408,8 +408,9 @@ def drawLastFriend(i):
         textDistFriend = fontDistSet.render(str(int(objectsLastFriend[i][0]*Nm)), False, colorFriend)
     else:
         textDistFriend = fontDistSet.render(str(int(objectsLastFriend[i][0])), False, colorFriend)
-    wGame.screen.blit(imageRot, [x, y])    
-    wGame.screen.blit(textDistFriend, [x+5, y+30])
+    if y < hWindow-wFrame:
+        wGame.screen.blit(imageRot, [x, y])    
+        wGame.screen.blit(textDistFriend, [x+5, y+30])
 
 def drawFoe(i):
     x = wWindow/2+objectsFoe[i][1]*pxScaleAzi
@@ -434,8 +435,9 @@ def drawLastFoe(i):
         textDistFoe = fontDistSet.render(str(int(objectsLastFoe[i][0]*Nm)), False, colorFoe)
     else:
         textDistFoe = fontDistSet.render(str(int(objectsLastFoe[i][0])), False, colorFoe)
-    wGame.screen.blit(imageRot, [x, y])    
-    wGame.screen.blit(textDistFoe, [x+5, y+30])
+    if y < hWindow-wFrame:
+        wGame.screen.blit(imageRot, [x, y])    
+        wGame.screen.blit(textDistFoe, [x+5, y+30])
 
 def drawRoam(i):
     x = wWindow/2+objectsRoam[i][1]*pxScaleAzi
@@ -460,8 +462,9 @@ def drawLastRoam(i):
         textDistRoam = fontDistSet.render(str(int(objectsLastRoam[i][0]*Nm)), False, colorRoam)
     else:
         textDistRoam = fontDistSet.render(str(int(objectsLastRoam[i][0])), False, colorRoam)
-    wGame.screen.blit(imageRot, [x, y])    
-    wGame.screen.blit(textDistRoam, [x+5, y+30])
+    if y < hWindow-wFrame:
+        wGame.screen.blit(imageRot, [x, y])    
+        wGame.screen.blit(textDistRoam, [x+5, y+30])
 
 # Init PyGame and UDP
 #run = input('Is simulation enabled to start? y/n: \n')
@@ -621,6 +624,11 @@ while run:
         if yScanAim < searchAimDown:
             yScanAim += scanAimStep
             yScanAim_ -= scanAimStep
+    if keys[pg.K_SPACE]:
+        if aimLogic == False:
+            aimLogic = True
+        else:
+            aimLogic = False
             
 
     # Receive decoded message
@@ -762,8 +770,11 @@ while run:
             drawSearchEleIco(ySearchEle)
         else:
             msTimeBarAzi = 0
-        # Draw aim ico 
-        drawAimIco(xScanAim, yScanAim)
+        # Draw aim ico
+        if aimLogic == False:
+            drawAimIco(xScanAim, yScanAim)
+        elif aimLogic == True:
+            drawAimIco(wWindow/2+objectsLastFriend[0][1]*pxScaleAzi, (hWindow-wFrame)-objectsLastFriend[i][0]*pxScaleDis)
     else:    
         OpenMenu()
             
