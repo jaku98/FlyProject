@@ -773,11 +773,13 @@ while run:
                                     textaimBugAngle = fontSet.render(str(aimBugAngle) + str('P'), False, fontColorWhite)
                                 wGame.screen.blit(textaimBugAngle, [145, 110])
                                 if ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) <= searchAziLeft+20:
-                                    scanAziLeft -= scanAziStep
-                                    scanAziRight -= scanAziStep
+                                    if scanAziLeft > -scanAzimuth:
+                                        scanAziLeft -= scanAziStep
+                                        scanAziRight -= scanAziStep
                                 if ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) >= searchAziRight-20:
-                                    scanAziLeft += scanAziStep
-                                    scanAziRight += scanAziStep
+                                    if scanAziRight < scanAzimuth:    
+                                        scanAziLeft += scanAziStep
+                                        scanAziRight += scanAziStep
                             if aimLogic == False:
                                 drawFoe(i)
                                 drawLastFoe(i)
@@ -798,11 +800,13 @@ while run:
                                     textaimBugAngle = fontSet.render(str(aimBugAngle) + str('P'), False, fontColorWhite)
                                 wGame.screen.blit(textaimBugAngle, [145, 110])
                                 if ((wWindow/2+objectsRoam[aimIndexRoam][1]*pxScaleAzi)) <= searchAziLeft+20:
-                                    scanAziLeft -= scanAziStep
-                                    scanAziRight -= scanAziStep
+                                    if scanAziLeft > -scanAzimuth:
+                                        scanAziLeft -= scanAziStep
+                                        scanAziRight -= scanAziStep
                                 if ((wWindow/2+objectsRoam[aimIndexRoam][1]*pxScaleAzi)) >= searchAziRight-20:
-                                    scanAziLeft += scanAziStep
-                                    scanAziRight += scanAziStep                            
+                                    if scanAziRight < scanAzimuth:    
+                                        scanAziLeft += scanAziStep
+                                        scanAziRight += scanAziStep                            
                             if aimLogic == False:
                                 drawRoam(i)
                                 drawLastRoam(i)
