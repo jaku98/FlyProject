@@ -151,9 +151,12 @@ colorDBlue = [0, 125, 240]
 objectsFriend = np.zeros((10,6))
 objectsFoe = np.zeros((10,6))
 objectsRoam = np.zeros((10,6))
-objectsLastFriend = np.zeros((10,3))
-objectsLastFoe = np.zeros((10,3))
-objectsLastRoam = np.zeros((10,3))
+objectsLastFriend = np.zeros((10,4))
+objectsLastFoe = np.zeros((10,4))
+objectsLastRoam = np.zeros((10,4))
+roamTarget = 0
+foeTarget = 0
+friendTarget = 0
 imageFriend = pg.transform.scale(pg.image.load('pic/friend.png'),[25,25])
 imageFoe = pg.transform.scale(pg.image.load('pic/foe.png'),[25,25])
 imageRoam = pg.transform.scale(pg.image.load('pic/unknow.png'),[25,25])
@@ -239,6 +242,13 @@ aimDownRange = 0
 aimDist = center
 aimNorm = 260 / 18.5 # Max upper altitude (in radar)/ reality altitude (80.000 ft - 18.5 km) #Documentation
 aimLogic = False
+aimFoe = True
+aimRoam = False
+aimTrackDis = 0
+aimIndexFoe = 0
+aimIndexRoam = 0
+aimBugAngle = 0
+
 
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
@@ -294,6 +304,8 @@ textEleNum = fontSet.render(str(scanEle), False, fontColorWhite)
 #AIM
 textaimUpRange = fontDistSet.render(str(aimUpRange), False, fontColorWhite)
 textaimDownRange = fontDistSet.render(str(aimDownRange), False, fontColorWhite)
+#BUGANGLE
+textaimBugAngle = fontSet.render(str(aimBugAngle), False, fontColorWhite)
 
 # Show text start menu
 def OpenMenu():
@@ -347,7 +359,7 @@ def FCRMenu():
     wGame.screen.blit(textDCLT, [425, 500])
 
     wGame.screen.blit(textCONT, [475, 155])
-
+    
     for i in range(7):
         if i == 3:
             pg.draw.line(wGame.screen, fontColorWhite, (115, 195+35*i),(130, 195+35*i),2)
@@ -485,12 +497,18 @@ while run:
     # graphic init
     wGame.cockpit()
 
+    # event handling
     # Ctrl + C to terminate
     for event in pg.event.get():
         if event.type == pg.QUIT:
-            run = False    
-
-    # event handling 
+            run = False
+        if event.type == pg.KEYUP:
+            if event.key==K_SPACE:    
+                if aimLogic == False:
+                    aimLogic = True
+                else:
+                    aimLogic = False
+ 
     keys = pg.key.get_pressed()
     # button event
     if Button1.draw():
@@ -561,8 +579,18 @@ while run:
         print('8')
     if Button9.draw():
         print('9')
+        aimRoam = False
+        aimFoe = True
+        aimIndexFoe += 1
+        if aimIndexFoe == foeTarget:
+            aimIndexFoe = 0
     if Button10.draw():
         print('10')
+        aimRoam = True
+        aimFoe = False
+        aimIndexRoam += 1
+        if aimIndexRoam == roamTarget:
+            aimIndexRoam = 0  
     if Button11.draw():
         print('11')
     if Button12.draw():
@@ -574,6 +602,7 @@ while run:
     if Button15.draw():
         print('15')
     if Button16.draw():
+        print('16')
         if SWAP == False:
             SWAP = True
         else:
@@ -624,15 +653,9 @@ while run:
         if yScanAim < searchAimDown:
             yScanAim += scanAimStep
             yScanAim_ -= scanAimStep
-    if keys[pg.K_SPACE]:
-        if aimLogic == False:
-            aimLogic = True
-        else:
-            aimLogic = False
-            
+           
 
     # Receive decoded message
-
     message = myUDP.receive()
 
     # Receive section / Implementation of variable
@@ -643,13 +666,13 @@ while run:
     angleToPawnFoe, altFoe, indexFoe = message[10], message[11], int(message[12])
     distRoam, aziRoam, eleRoam = message[13], message[14], message[15]
     angleToPawnRoam, altRoam, indexRoam = message[16], message[17], int(message[18])
-    allTargets, friendsTarget, foeTarget, roamTarget = int(message[19]), int(message[20]),  int(message[21]),  int(message[22])
+    allTargets, friendTarget, foeTarget, roamTarget = int(message[19]), int(message[20]),  int(message[21]),  int(message[22])
 
     if allTargets > 0:
 
         # Calculate and save variables
-        if friendsTarget > 0:
-            for i in range(friendsTarget):
+        if friendTarget > 0:
+            for i in range(friendTarget):
                 if indexFriend > 0:    
                     objectsFriend[indexFriend-1][0] = distFriend/1000
                     objectsFriend[indexFriend-1][1] = aziFriend
@@ -681,21 +704,33 @@ while run:
 
     # Refresh variables and text
     pxScaleDis = (hWindow-wFrame*2)/scanDistance
-    searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
-    searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
     searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
     searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
-    aimDist = yScanAim_/pxScaleDis
 
-    if scanEleUp_ < 0:
-        aimUpRange = -1*(2*(-scanEleUp_/360)*np.pi*aimDist)
-    if scanEleDown_ < 0:
-        aimDownRange = -1*(2*(-scanEleDown_/360)*np.pi*aimDist)
-    if scanEleUp_ >= 0:
-        aimUpRange = 2*(scanEleUp_/360)*np.pi*aimDist
-    if scanEleDown_ >= 0:    
-        aimDownRange = 2*(scanEleDown_/360)*np.pi*aimDist
-
+    if aimLogic == True:
+        if aimFoe == True:
+            aimTrackDis = objectsLastFoe[aimIndexFoe][0]*pxScaleDis
+        if aimRoam == True:
+            aimTrackDis = objectsLastRoam[aimIndexRoam][0]*pxScaleDis
+        aimDist = aimTrackDis
+        if scanEleUp_ < 0:
+            aimUpRange = -1*(2*(-scanEleUp_/360)*np.pi*aimDist)
+        if scanEleDown_ < 0:
+            aimDownRange = -1*(2*(-scanEleDown_/360)*np.pi*aimDist)
+        if scanEleUp_ >= 0:
+            aimUpRange = 2*(scanEleUp_/360)*np.pi*aimDist
+        if scanEleDown_ >= 0:    
+            aimDownRange = 2*(scanEleDown_/360)*np.pi*aimDist
+    else:
+        aimDist = yScanAim_/pxScaleDis
+        if scanEleUp_ < 0:
+            aimUpRange = -1*(2*(-scanEleUp_/360)*np.pi*aimDist)
+        if scanEleDown_ < 0:
+            aimDownRange = -1*(2*(-scanEleDown_/360)*np.pi*aimDist)
+        if scanEleUp_ >= 0:
+            aimUpRange = 2*(scanEleUp_/360)*np.pi*aimDist
+        if scanEleDown_ >= 0:    
+            aimDownRange = 2*(scanEleDown_/360)*np.pi*aimDist
 
     if SWAP == False:
         textDist = fontSet.render(str(round(scanDistance*Nm)), False, fontColorWhite)
@@ -713,29 +748,68 @@ while run:
         FCRMenu()
         # Draw targets
         if allTargets > 0:
-            if friendsTarget > 0:
-                for i in range(friendsTarget):
+            if friendTarget > 0:
+                for i in range(friendTarget):
                     if ((-scanAzimuth<=objectsFriend[i][1]<=scanAzimuth) and (-scanElevation<=objectsFriend[i][2]<=scanElevation)
                                                                             and (objectsFriend[i][0]<scanDistance)):
                         if scanAziLeft<objectsFriend[i][1]<scanAziRight  and scanEleDown<objectsFriend[i][2]<scanEleUp:
-                            drawFriend(i)
-                            drawLastFriend(i) 
+                            if aimLogic == False:
+                                drawFriend(i)
+                                drawLastFriend(i)
             if foeTarget > 0:
                 for i in range(foeTarget):
                     if ((-scanAzimuth<=objectsFoe[i][1]<=scanAzimuth) and (-scanElevation<=objectsFoe[i][2]<=scanElevation)
                                                                         and (objectsFoe[i][0]<scanDistance)):
-                        if scanAziLeft<objectsFoe[i][1]<scanAziRight and scanEleDown<objectsFoe[i][2]<scanEleUp:    
-                            drawFoe(i)
-                            drawLastFoe(i)
+                        if scanAziLeft<objectsFoe[i][1]<scanAziRight and scanEleDown<objectsFoe[i][2]<scanEleUp:
+                            if aimLogic == True and aimFoe == True:
+                                if wFrame < (wWindow/2+objectsLastFoe[aimIndexFoe][1]*pxScaleAzi) < (hWindow - wFrame) and wFrame < ((hWindow-wFrame)-objectsLastFoe[aimIndexFoe][0]*pxScaleDis) < (hWindow - wFrame):
+                                    drawAimIco((wWindow/2+objectsLastFoe[aimIndexFoe][1]*pxScaleAzi) +15, ((hWindow-wFrame)-objectsLastFoe[aimIndexFoe][0]*pxScaleDis) + 15)
+                                    drawFoe(aimIndexFoe)
+                                    drawLastFoe(aimIndexFoe)
+                                aimBugAngle = int(objectsLastFoe[aimIndexFoe][1])
+                                if aimBugAngle <= 0:
+                                    textaimBugAngle = fontSet.render(str(aimBugAngle*-1) + str('L'), False, fontColorWhite)
+                                else:
+                                    textaimBugAngle = fontSet.render(str(aimBugAngle) + str('P'), False, fontColorWhite)
+                                wGame.screen.blit(textaimBugAngle, [145, 110])
+                                if ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) <= searchAziLeft+20:
+                                    scanAziLeft -= scanAziStep
+                                    scanAziRight -= scanAziStep
+                                if ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) >= searchAziRight-20:
+                                    scanAziLeft += scanAziStep
+                                    scanAziRight += scanAziStep
+                            if aimLogic == False:
+                                drawFoe(i)
+                                drawLastFoe(i)
             if roamTarget > 0:
                 for i in range(roamTarget):
                     if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation)
                                                                         and (objectsRoam[i][0]<scanDistance)):
                         if scanAziLeft<objectsRoam[i][1]<scanAziRight and scanEleDown<objectsRoam[i][2]<scanEleUp:
-                            drawRoam(i)
-                            drawLastRoam(i)
+                            if aimLogic == True and aimRoam == True:
+                                if wFrame < (wWindow/2+objectsLastRoam[aimIndexRoam][1]*pxScaleAzi) < (hWindow - wFrame) and wFrame < ((hWindow-wFrame)-objectsLastRoam[aimIndexRoam][0]*pxScaleDis) < (hWindow - wFrame):
+                                    drawAimIco((wWindow/2+objectsLastRoam[aimIndexRoam][1]*pxScaleAzi) +15, ((hWindow-wFrame)-objectsLastRoam[aimIndexRoam][0]*pxScaleDis) + 15)
+                                    drawRoam(aimIndexRoam)
+                                    drawLastRoam(aimIndexRoam)
+                                aimBugAngle = int(objectsLastRoam[aimIndexRoam][1])
+                                if aimBugAngle <= 0:
+                                    textaimBugAngle = fontSet.render(str(aimBugAngle*-1) + str('L'), False, fontColorWhite)
+                                else:
+                                    textaimBugAngle = fontSet.render(str(aimBugAngle) + str('P'), False, fontColorWhite)
+                                wGame.screen.blit(textaimBugAngle, [145, 110])
+                                if ((wWindow/2+objectsRoam[aimIndexRoam][1]*pxScaleAzi)) <= searchAziLeft+20:
+                                    scanAziLeft -= scanAziStep
+                                    scanAziRight -= scanAziStep
+                                if ((wWindow/2+objectsRoam[aimIndexRoam][1]*pxScaleAzi)) >= searchAziRight-20:
+                                    scanAziLeft += scanAziStep
+                                    scanAziRight += scanAziStep                            
+                            if aimLogic == False:
+                                drawRoam(i)
+                                drawLastRoam(i)
         
         # Draw search azimuth lines
+        searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
+        searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
         if scanAzi < 6:
             drawSearchAzi(searchAziLeft, searchAziRight)
         # Draw antenna search azi ico
@@ -773,8 +847,6 @@ while run:
         # Draw aim ico
         if aimLogic == False:
             drawAimIco(xScanAim, yScanAim)
-        elif aimLogic == True:
-            drawAimIco(wWindow/2+objectsLastFriend[0][1]*pxScaleAzi, (hWindow-wFrame)-objectsLastFriend[i][0]*pxScaleDis)
     else:    
         OpenMenu()
             
@@ -784,12 +856,12 @@ while run:
     if indexDel > 100:
         if allTargets > 0:
             del allTargets   
-        if friendsTarget > 0:
-            del distFriend, aziFriend, eleFriend, angleToPawnFriend, altFriend, indexFriend, friendsTarget   
+        if friendTarget > 0:
+            del distFriend, aziFriend, eleFriend, angleToPawnFriend, altFriend, indexFriend  
         if foeTarget > 0:
-            del distFoe, aziFoe, eleFoe, angleToPawnFoe, altFoe, indexFoe, foeTarget
+            del distFoe, aziFoe, eleFoe, angleToPawnFoe, altFoe, indexFoe
         if roamTarget > 0:  
-            del distRoam, aziRoam, eleRoam, angleToPawnRoam, altRoam, indexRoam, roamTarget 
+            del distRoam, aziRoam, eleRoam, angleToPawnRoam, altRoam, indexRoam
         indexDel = 0
     indexDel += 1 
 
