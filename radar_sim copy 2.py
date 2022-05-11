@@ -4,8 +4,6 @@ from pygame.locals import *
 import socket, struct, select, sys, gc
 import numpy as np 
 
-pg.font.init()
-gc.collect()
 
 class UDPConnection:
 
@@ -123,11 +121,21 @@ class Button:
         return action
 
 
+pg.font.init()
+gc.collect()
+msTimeBarAzi = 0
+clock = pg.time.Clock()
 
 # Radar search parametr and data
 scanElevation = 26.2*2
 scanAzimuth = 60
 scanDistance = 296
+barAziMove = 2500 # ms
+dweelTime = 100 # 80-100 ms
+barAziLogic = False
+targetInArea = False
+Nm = 0.539956
+feet = 3280.8 / 1000
 
 colorFriend = (0,255,0) # Green
 colorFoe = (255,0,0) # Red
@@ -143,6 +151,9 @@ colorDBlue = [0, 125, 240]
 objectsFriend = np.zeros((10,6))
 objectsFoe = np.zeros((10,6))
 objectsRoam = np.zeros((10,6))
+objectsLastFriend = np.zeros((10,3))
+objectsLastFoe = np.zeros((10,3))
+objectsLastRoam = np.zeros((10,3))
 imageFriend = pg.transform.scale(pg.image.load('pic/friend.png'),[25,25])
 imageFoe = pg.transform.scale(pg.image.load('pic/foe.png'),[25,25])
 imageRoam = pg.transform.scale(pg.image.load('pic/unknow.png'),[25,25])
@@ -150,6 +161,10 @@ arrayFriendImg = [imageFriend]*10
 arrayFoeImg = [imageFoe]*10
 arrayRoamImg = [imageRoam]*10
 indexDel = 0
+x = 0
+y = 0
+xLast = 0
+yLast = 0
 
 
 # ///GUI///
@@ -190,6 +205,8 @@ Button20 = Button(420,540)
 #Button variables
 clicked = False
 FCR = False
+SWAP = False
+
 clickDis = 3
 scanDistanceCalc = scanDistance
 
@@ -199,8 +216,10 @@ scanAziStep = 2
 scanAziLeft = -scanAzimuth
 scanAziRight = scanAzimuth
 xSearchAzi = center
-xSearchAziStep = 10
+xSearchAziStep = barAziMove/(hWindow-wFrame*2)
 xSearchAziStep_ = xSearchAziStep
+searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
+searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
 
 scanEle = 4
 clicksScanEle = 0
@@ -210,11 +229,14 @@ scanEleDown = -scanElevation/2
 scanEleDown_ = scanEleDown/2
 scanEleStep = 1
 ySearchEle = center
+searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
+searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
+
 
 xScanAim = center
 yScanAim = center
 yScanAim_ = yScanAim
-scanAimStep = 5
+scanAimStep = 2
 searchAimUp = wFrame
 searchAimDown = hWindow-wFrame
 aimUpRange = 0
@@ -249,6 +271,8 @@ textRESET = fontSet.render("RESET", False, fontColorWhite)
 textSWAP = fontSet.render("SWAP", False, fontColorWhite)
 textLABEL = fontSet.render("--------", False, fontColorWhite, fontColorWhite)
 textDTE = fontSet.render("DTE", False, fontColorWhite)
+#CENTER
+textFCROFF = fontSet.render("FCR OFF", False, fontColorWhite)
 
 # FCR Menu
 #UP
@@ -296,7 +320,8 @@ def OpenMenu():
 
     wGame.screen.blit(textSWAP, [145, 500])
     wGame.screen.blit(textLABEL, [220, 500])
-    wGame.screen.blit(textDTE, [360, 500])
+    wGame.screen.blit(textDTE, [360, 500]) 
+    wGame.screen.blit(textFCROFF, [280, 300])
 
 # Fcr menu
 def FCRMenu():
@@ -368,26 +393,80 @@ def drawFriend(i):
     x = wWindow/2+objectsFriend[i][1]*pxScaleAzi
     y = (hWindow-wFrame)-objectsFriend[i][0]*pxScaleDis
     imageRot = pg.transform.rotate(arrayFriendImg[i], objectsFriend[i][3]*-1)    
-    wGame.screen.blit(imageRot, [x, y])
-    textDistFriend = fontDistSet.render(str(int(objectsFriend[i][0])), False, colorFriend)
+    if SWAP == False:
+        textDistFriend = fontDistSet.render(str(int(objectsFriend[i][0]*Nm)), False, colorFriend)
+    else:
+        textDistFriend = fontDistSet.render(str(int(objectsFriend[i][0])), False, colorFriend)
+    if (xSearchAzi - dweelTime/2) <= x <= (xSearchAzi + dweelTime/2):
+        wGame.screen.blit(imageRot, [x, y])    
+        wGame.screen.blit(textDistFriend, [x+5, y+30])
+        objectsLastFriend[i][0] = objectsFriend[i][0]
+        objectsLastFriend[i][1] = objectsFriend[i][1]
+        objectsLastFriend[i][2] = objectsFriend[i][3]
+        
+def drawLastFriend(i):
+    x = wWindow/2+objectsLastFriend[i][1]*pxScaleAzi
+    y = (hWindow-wFrame)-objectsLastFriend[i][0]*pxScaleDis
+    imageRot = pg.transform.rotate(arrayFriendImg[i], objectsLastFriend[i][2]*-1) 
+    if SWAP == False:
+        textDistFriend = fontDistSet.render(str(int(objectsLastFriend[i][0]*Nm)), False, colorFriend)
+    else:
+        textDistFriend = fontDistSet.render(str(int(objectsLastFriend[i][0])), False, colorFriend)
+    wGame.screen.blit(imageRot, [x, y])    
     wGame.screen.blit(textDistFriend, [x+5, y+30])
 
 def drawFoe(i):
     x = wWindow/2+objectsFoe[i][1]*pxScaleAzi
-    y = (hWindow-wFrame)-objectsFoe[i][0]*pxScaleDis    
+    y = (hWindow-wFrame)-objectsFoe[i][0]*pxScaleDis
     imageRot = pg.transform.rotate(arrayFoeImg[i], objectsFoe[i][3]*-1)    
-    wGame.screen.blit(imageRot, [x, y])
-    textDistFoe = fontDistSet.render(str(int(objectsFoe[i][0])), False, colorFoe)
+    if SWAP == False:
+        textDistFoe = fontDistSet.render(str(int(objectsFoe[i][0]*Nm)), False, colorFoe)
+    else:
+        textDistFoe = fontDistSet.render(str(int(objectsFoe[i][0])), False, colorFoe)
+    if (xSearchAzi - dweelTime/2) <= x <= (xSearchAzi + dweelTime/2):
+        wGame.screen.blit(imageRot, [x, y])    
+        wGame.screen.blit(textDistFoe, [x+5, y+30])
+        objectsLastFoe[i][0] = objectsFoe[i][0]
+        objectsLastFoe[i][1] = objectsFoe[i][1]
+        objectsLastFoe[i][2] = objectsFoe[i][3]
+        
+def drawLastFoe(i):
+    x = wWindow/2+objectsLastFoe[i][1]*pxScaleAzi
+    y = (hWindow-wFrame)-objectsLastFoe[i][0]*pxScaleDis
+    imageRot = pg.transform.rotate(arrayFoeImg[i], objectsLastFoe[i][2]*-1) 
+    if SWAP == False:
+        textDistFoe = fontDistSet.render(str(int(objectsLastFoe[i][0]*Nm)), False, colorFoe)
+    else:
+        textDistFoe = fontDistSet.render(str(int(objectsLastFoe[i][0])), False, colorFoe)
+    wGame.screen.blit(imageRot, [x, y])    
     wGame.screen.blit(textDistFoe, [x+5, y+30])
 
 def drawRoam(i):
     x = wWindow/2+objectsRoam[i][1]*pxScaleAzi
     y = (hWindow-wFrame)-objectsRoam[i][0]*pxScaleDis
     imageRot = pg.transform.rotate(arrayRoamImg[i], objectsRoam[i][3]*-1)    
-    wGame.screen.blit(imageRot, [x, y])
-    textDistRoam = fontDistSet.render(str(int(objectsRoam[i][0])), False, colorRoam)
+    if SWAP == False:
+        textDistRoam = fontDistSet.render(str(int(objectsRoam[i][0]*Nm)), False, colorRoam)
+    else:
+        textDistRoam = fontDistSet.render(str(int(objectsRoam[i][0])), False, colorRoam)
+    if (xSearchAzi - dweelTime/2) <= x <= (xSearchAzi + dweelTime/2):
+        wGame.screen.blit(imageRot, [x, y])    
+        wGame.screen.blit(textDistRoam, [x+5, y+30])
+        objectsLastRoam[i][0] = objectsRoam[i][0]
+        objectsLastRoam[i][1] = objectsRoam[i][1]
+        objectsLastRoam[i][2] = objectsRoam[i][3]
+        
+def drawLastRoam(i):
+    x = wWindow/2+objectsLastRoam[i][1]*pxScaleAzi
+    y = (hWindow-wFrame)-objectsLastRoam[i][0]*pxScaleDis
+    imageRot = pg.transform.rotate(arrayRoamImg[i], objectsLastRoam[i][2]*-1) 
+    if SWAP == False:
+        textDistRoam = fontDistSet.render(str(int(objectsLastRoam[i][0]*Nm)), False, colorRoam)
+    else:
+        textDistRoam = fontDistSet.render(str(int(objectsLastRoam[i][0])), False, colorRoam)
+    wGame.screen.blit(imageRot, [x, y])    
     wGame.screen.blit(textDistRoam, [x+5, y+30])
-    
+
 # Init PyGame and UDP
 #run = input('Is simulation enabled to start? y/n: \n')
 run = 'y'
@@ -401,13 +480,17 @@ else:
     print('Exit')
 
 while run:
+    dt = clock.tick()
+    msTimeBarAzi += dt
+
+    # graphic init
+    wGame.cockpit()
+
     # Ctrl + C to terminate
     for event in pg.event.get():
         if event.type == pg.QUIT:
-            run = False
-    # graphic init
-    wGame.cockpit()
-    
+            run = False    
+
     # event handling 
     keys = pg.key.get_pressed()
     # button event
@@ -492,7 +575,10 @@ while run:
     if Button15.draw():
         print('15')
     if Button16.draw():
-        print('16') 
+        if SWAP == False:
+            SWAP = True
+        else:
+            SWAP = False 
     if Button17.draw():
         print('17')        
     if Button18.draw():
@@ -589,83 +675,105 @@ while run:
                     objectsRoam[indexRoam-1][5] = indexRoam
 
 
-        # Refresh variables and text
-        pxScaleDis = (hWindow-wFrame*2)/scanDistance
-        searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
-        searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
-        searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
-        searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
-        aimDist = yScanAim_/pxScaleDis
+    # Refresh variables and text
+    pxScaleDis = (hWindow-wFrame*2)/scanDistance
+    searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
+    searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
+    searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
+    searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
+    aimDist = yScanAim_/pxScaleDis
 
-        if scanEleUp_ < 0:
-            aimUpRange = -1*(2*(-scanEleUp_/360)*np.pi*aimDist)
-        if scanEleDown_ < 0:
-            aimDownRange = -1*(2*(-scanEleDown_/360)*np.pi*aimDist)
-        if scanEleUp_ >= 0:
-            aimUpRange = 2*(scanEleUp_/360)*np.pi*aimDist
-        if scanEleDown_ >= 0:    
-            aimDownRange = 2*(scanEleDown_/360)*np.pi*aimDist
+    if scanEleUp_ < 0:
+        aimUpRange = -1*(2*(-scanEleUp_/360)*np.pi*aimDist)
+    if scanEleDown_ < 0:
+        aimDownRange = -1*(2*(-scanEleDown_/360)*np.pi*aimDist)
+    if scanEleUp_ >= 0:
+        aimUpRange = 2*(scanEleUp_/360)*np.pi*aimDist
+    if scanEleDown_ >= 0:    
+        aimDownRange = 2*(scanEleDown_/360)*np.pi*aimDist
 
+
+    if SWAP == False:
+        textDist = fontSet.render(str(round(scanDistance*Nm)), False, fontColorWhite)
+        textaimUpRange = fontDistSet.render(str(int(aimUpRange/aimNorm*feet)), False, fontColorWhite)
+        textaimDownRange = fontDistSet.render(str(int(aimDownRange/aimNorm*feet)), False, fontColorWhite)
+    else:
         textDist = fontSet.render(str(round(scanDistance)), False, fontColorWhite)
-        textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
-        textEleNum = fontSet.render(str(round(scanEle)), False, fontColorWhite)
         textaimUpRange = fontDistSet.render(str(int(aimUpRange/aimNorm)), False, fontColorWhite)
         textaimDownRange = fontDistSet.render(str(int(aimDownRange/aimNorm)), False, fontColorWhite)
 
-        if FCR == True:
-            FCRMenu()
-            # Draw targets
-            for i in range(friendsTarget):
-                if ((-scanAzimuth<=objectsFriend[i][1]<=scanAzimuth) and (-scanElevation<=objectsFriend[i][2]<=scanElevation)
-                                                                     and (objectsFriend[i][0]<scanDistance)):
-                    if scanAziLeft<objectsFriend[i][1]<scanAziRight  and scanEleDown<objectsFriend[i][2]<scanEleUp:
-                        drawFriend(i)
-            for i in range(foeTarget):
-                if ((-scanAzimuth<=objectsFoe[i][1]<=scanAzimuth) and (-scanElevation<=objectsFoe[i][2]<=scanElevation)
-                                                                  and (objectsFoe[i][0]<scanDistance)):
-                    if scanAziLeft<objectsFoe[i][1]<scanAziRight and scanEleDown<objectsFoe[i][2]<scanEleUp:    
-                        drawFoe(i)
-            for i in range(roamTarget):
-                if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation)
-                                                                   and (objectsRoam[i][0]<scanDistance)):
-                    if scanAziLeft<objectsRoam[i][1]<scanAziRight and scanEleDown<objectsRoam[i][2]<scanEleUp:
-                        drawRoam(i)
-            
-            # Draw search azimuth lines
-            if scanAzi < 6:
-                drawSearchAzi(searchAziLeft, searchAziRight)
+    textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
+    textEleNum = fontSet.render(str(round(scanEle)), False, fontColorWhite)
 
-            # Draw antenna search azi ico
+    if FCR == True:
+        FCRMenu()
+        # Draw targets
+        if allTargets > 0:
+            if friendsTarget > 0:
+                for i in range(friendsTarget):
+                    if ((-scanAzimuth<=objectsFriend[i][1]<=scanAzimuth) and (-scanElevation<=objectsFriend[i][2]<=scanElevation)
+                                                                            and (objectsFriend[i][0]<scanDistance)):
+                        if scanAziLeft<objectsFriend[i][1]<scanAziRight  and scanEleDown<objectsFriend[i][2]<scanEleUp:
+                            drawFriend(i)
+                            drawLastFriend(i) 
+            if foeTarget > 0:
+                for i in range(foeTarget):
+                    if ((-scanAzimuth<=objectsFoe[i][1]<=scanAzimuth) and (-scanElevation<=objectsFoe[i][2]<=scanElevation)
+                                                                        and (objectsFoe[i][0]<scanDistance)):
+                        if scanAziLeft<objectsFoe[i][1]<scanAziRight and scanEleDown<objectsFoe[i][2]<scanEleUp:    
+                            drawFoe(i)
+                            drawLastFoe(i)
+            if roamTarget > 0:
+                for i in range(roamTarget):
+                    if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation)
+                                                                        and (objectsRoam[i][0]<scanDistance)):
+                        if scanAziLeft<objectsRoam[i][1]<scanAziRight and scanEleDown<objectsRoam[i][2]<scanEleUp:
+                            drawRoam(i)
+                            drawLastRoam(i)
+        
+        # Draw search azimuth lines
+        if scanAzi < 6:
+            drawSearchAzi(searchAziLeft, searchAziRight)
+
+        # Draw antenna search azi ico
+        if msTimeBarAzi < barAziMove:
             xSearchAzi += xSearchAziStep
             if xSearchAzi<=searchAziLeft:
                 xSearchAziStep = xSearchAziStep_
-                
             elif xSearchAzi>=searchAziRight:
                 xSearchAziStep = -xSearchAziStep_
             drawSearchAziIco(xSearchAzi)
-
-            # Draw antenna search ele ico
+        # Draw antenna search ele ico
             if scanEle == 1:
                 ySearchEle = (searchEleDown+searchEleUp)/2
             elif scanEle == 2:
-                if indexDel == 50:
+                if xSearchAzi >= searchAziRight:
                     ySearchEle = searchEleUp
-                elif indexDel == 100:
-                    ySearchEle = searchEleDown 
+                elif xSearchAzi <= searchAziLeft:
+                    ySearchEle = searchEleDown
             else:
-                if indexDel == 33:
-                    ySearchEle = searchEleUp
-                elif indexDel == 66:
-                    ySearchEle = searchEleDown 
-                elif indexDel == 99:
+                if xSearchAzi >= searchAziRight and barAziLogic == False:
+                    ySearchEle = searchEleDown
+                    barAziLogic = True
+                elif xSearchAzi <= searchAziLeft and barAziLogic == True:
                     ySearchEle = (searchEleDown+searchEleUp)/2
+                    barAziLogic = True
+                elif xSearchAzi >= searchAziRight and barAziLogic == True:
+                    ySearchEle = searchEleUp
+                    barAziLogic = False
+                elif xSearchAzi <= searchAziLeft and barAziLogic == False:
+                    ySearchEle = (searchEleDown+searchEleUp)/2
+                    barAziLogic = False                   
             drawSearchEleIco(ySearchEle)
-            
-            # Draw aim ico 
-            drawAimIco(xScanAim, yScanAim)
+        else:
+            msTimeBarAzi = 0
 
-        else:    
-            OpenMenu()
+       
+        # Draw aim ico 
+        drawAimIco(xScanAim, yScanAim)
+
+    else:    
+        OpenMenu()
             
 
     # Delete section
@@ -683,4 +791,3 @@ while run:
     indexDel += 1 
 
     pg.display.update()
-    pg.time.delay(1)
