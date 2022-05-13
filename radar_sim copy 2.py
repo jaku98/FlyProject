@@ -242,7 +242,7 @@ aimDownRange = 0
 aimDist = center
 aimNorm = 260 / 18.5 # Max upper altitude (in radar)/ reality altitude (80.000 ft - 18.5 km) #Documentation
 aimLogic = False
-aimFoe = True
+aimFoe = False
 aimRoam = False
 aimTrackDis = 0
 aimIndexFoe = 0
@@ -295,6 +295,8 @@ textDTE = fontSet.render(" DTE ", False, fontColorWhite, fontColorBlack)
 textDCLT = fontSet.render(" DCLT ", False, fontColorWhite, fontColorBlack)
 #RIGHT
 textCONT = fontSet.render("CONT", False, fontColorWhite, fontColorBlack)
+textFOE = fontSet.render("FOE", False, fontColorWhite, fontColorBlack)
+textROAM = fontSet.render("ROAM", False, fontColorWhite, fontColorBlack)
 #LEFT
 textDist = fontSet.render(str(scanDistance), False, fontColorWhite)
 textAzi = fontSet.render('A', False, fontColorWhite)
@@ -359,6 +361,7 @@ def FCRMenu():
     wGame.screen.blit(textDCLT, [425, 500])
 
     wGame.screen.blit(textCONT, [475, 155])
+
     
     for i in range(7):
         if i == 3:
@@ -389,13 +392,18 @@ def drawSearchEleIco(y):
     pg.draw.line(wGame.screen, colorDBlue, (127, y-i), (127, y+i), 4)
 
 def drawAimIco(x, y):
-    i = 12
-    k = 10
+    i = 14
+    k = 12
     j = 4
     pg.draw.line(wGame.screen, fontColorWhite, (x-k, y-i), (x-k, y+i), 2)
     pg.draw.line(wGame.screen, fontColorWhite, (x+k, y-i), (x+k, y+i), 2)
     wGame.screen.blit(textaimUpRange, [x+k+j, y-4*j])
     wGame.screen.blit(textaimDownRange, [x+k+j, y])
+
+def drawAimCircleIco(x, y, color):
+    pg.draw.circle(wGame.screen, color, (x, y), 10, 1)
+    wGame.screen.blit(textFOE, [490, 366])
+    wGame.screen.blit(textROAM, [475, 435])
    
 def drawFriend(i):
     x = wWindow/2+objectsFriend[i][1]*pxScaleAzi
@@ -503,12 +511,12 @@ while run:
         if event.type == pg.QUIT:
             run = False
         if event.type == pg.KEYUP:
-            if event.key==K_SPACE:    
-                if aimLogic == False:
-                    aimLogic = True
-                else:
-                    aimLogic = False
- 
+            if event.key==K_SPACE:
+                    if aimLogic == False:
+                        aimLogic = True
+                    else:
+                        aimLogic = False
+    
     keys = pg.key.get_pressed()
     # button event
     if Button1.draw():
@@ -690,7 +698,7 @@ while run:
                     objectsFoe[indexFoe-1][3] = angleToPawnFoe
                     objectsFoe[indexFoe-1][4] = altFoe
                     objectsFoe[indexFoe-1][5] = indexFoe
- 
+
         if roamTarget > 0:
             for i in range(roamTarget):
                 if indexRoam > 0: 
@@ -763,7 +771,10 @@ while run:
                         if scanAziLeft<objectsFoe[i][1]<scanAziRight and scanEleDown<objectsFoe[i][2]<scanEleUp:
                             if aimLogic == True and aimFoe == True:
                                 if wFrame < (wWindow/2+objectsLastFoe[aimIndexFoe][1]*pxScaleAzi) < (hWindow - wFrame) and wFrame < ((hWindow-wFrame)-objectsLastFoe[aimIndexFoe][0]*pxScaleDis) < (hWindow - wFrame):
-                                    drawAimIco((wWindow/2+objectsLastFoe[aimIndexFoe][1]*pxScaleAzi) +15, ((hWindow-wFrame)-objectsLastFoe[aimIndexFoe][0]*pxScaleDis) + 15)
+                                    n = (wWindow/2+objectsLastFoe[aimIndexFoe][1]*pxScaleAzi) +15
+                                    m = ((hWindow-wFrame)-objectsLastFoe[aimIndexFoe][0]*pxScaleDis) + 15
+                                    drawAimIco(n, m)
+                                    drawAimCircleIco(n, m, colorFoe)
                                     drawFoe(aimIndexFoe)
                                     drawLastFoe(aimIndexFoe)
                                 aimBugAngle = int(objectsLastFoe[aimIndexFoe][1])
@@ -790,7 +801,10 @@ while run:
                         if scanAziLeft<objectsRoam[i][1]<scanAziRight and scanEleDown<objectsRoam[i][2]<scanEleUp:
                             if aimLogic == True and aimRoam == True:
                                 if wFrame < (wWindow/2+objectsLastRoam[aimIndexRoam][1]*pxScaleAzi) < (hWindow - wFrame) and wFrame < ((hWindow-wFrame)-objectsLastRoam[aimIndexRoam][0]*pxScaleDis) < (hWindow - wFrame):
-                                    drawAimIco((wWindow/2+objectsLastRoam[aimIndexRoam][1]*pxScaleAzi) +15, ((hWindow-wFrame)-objectsLastRoam[aimIndexRoam][0]*pxScaleDis) + 15)
+                                    n = (wWindow/2+objectsLastRoam[aimIndexRoam][1]*pxScaleAzi) +15
+                                    m = ((hWindow-wFrame)-objectsLastRoam[aimIndexRoam][0]*pxScaleDis) + 15
+                                    drawAimIco(n, m)
+                                    drawAimCircleIco(n, m, colorRoam)
                                     drawRoam(aimIndexRoam)
                                     drawLastRoam(aimIndexRoam)
                                 aimBugAngle = int(objectsLastRoam[aimIndexRoam][1])
