@@ -1,6 +1,6 @@
 # Title [pol]: Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
 # Title [eng]: Radar software model of airborne situational awareness system
-# Author: JAKUBCZYL MARCIN, 2022
+# Author: JAKUBCZYK MARCIN, 2022
 # The program works with a simulation created in the Unreal Engine 4
 import pygame as pg
 from pygame.locals import *
