@@ -1,4 +1,7 @@
-# Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
+# Title [pol]: Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
+# Title [eng]: Radar software model of airborne situational awareness system
+# Author: JAKUBCZYL MARCIN
+# The program works with a simulation created in the Unreal Engine 4
 import pygame as pg
 from pygame.locals import *
 import socket, struct, select, sys, gc
@@ -73,11 +76,11 @@ class Cockpit:
         pg.draw.line(self.screen, fontColorBlack, [self._x4-10,self._y4],[self._x4+10,self._y4],2) 
         pg.draw.line(self.screen, fontColorBlack, [self._x4,self._y4-10],[self._x4,self._y4+10],2)
     
-    # Red circle after click
+
     def circle(self, pos):
         self.pos = pos
-        self.circle_c = 'red' # color
-        self.circle_r = 10 # size
+        self.circle_c = 'red'
+        self.circle_r = 10
         pg.draw.circle(self.screen, self.circle_c, event.pos, self.circle_r)
 
 
@@ -94,8 +97,8 @@ class Button:
         self.y = y
     
     def draw(self):
-        global clicked
-        action = False
+        global btnClicked
+        btnLogic = False
 
         pos = pg.mouse.get_pos()
     
@@ -103,11 +106,11 @@ class Button:
 
         if buttonRect.collidepoint(pos):
             if pg.mouse.get_pressed()[0] == 1:
-                clicked = True
+                btnClicked = True
                 pg.draw.rect(wGame.screen, self.colorClick, buttonRect)
-            elif pg.mouse.get_pressed()[0] == 0 and clicked == True:
-                clicked = False
-                action = True
+            elif pg.mouse.get_pressed()[0] == 0 and btnClicked == True:
+                btnClicked = False
+                btnLogic = True
             else:
                 pg.draw.rect(wGame.screen, self.colorHvr, buttonRect)
         else:
@@ -118,7 +121,7 @@ class Button:
         pg.draw.line(wGame.screen, [255,255,255],(self.x, self.y + self.heightButton), (self.x + self.widthButton, self.y + self.heightButton),2)
         pg.draw.line(wGame.screen, [255,255,255],(self.x + self.widthButton, self.y), (self.x + self.widthButton, self.y + self.heightButton),2)
 
-        return action
+        return btnLogic
 
 
 pg.font.init()
@@ -128,8 +131,8 @@ clock = pg.time.Clock()
 
 # Radar search parametr and data
 scanElevation = 26.2*2
-scanAzimuth = 60
-scanDistance = 296
+scanAzimuth = 30*2
+scanDistance = 296 # km
 barAziMove = 2500 # ms
 dweelTime = 80 # 80-100 ms
 barAziLogic = False
@@ -137,6 +140,7 @@ targetInArea = False
 Nm = 0.539956
 feet = 3280.8 / 1000
 
+# Colors
 colorFriend = (0,255,0) # Green
 colorFoe = (255,0,0) # Red
 colorRoam = (255,255,0) # Yellow
@@ -148,6 +152,7 @@ colorGrey2 = [70, 70, 70]
 colorGrey3 = [100, 100, 100]
 colorDBlue = [0, 125, 240]
 
+# Target data
 objectsFriend = np.zeros((10,6))
 objectsFoe = np.zeros((10,6))
 objectsRoam = np.zeros((10,6))
@@ -165,8 +170,6 @@ arrayFoeImg = [imageFoe]*10
 arrayRoamImg = [imageRoam]*10
 indexDel = 0
 
-
-# ///GUI///
 # Window settings
 wWindow = 600
 hWindow = 600
@@ -201,16 +204,21 @@ Button18 = Button(280,540)
 Button19 = Button(350,540)
 Button20 = Button(420,540)
 
-#Button variables
-clicked = False
+btnInfo = '\n available soon'
+
+btnClicked = False
 FCR = False
 SWAP = False
 
+### Variable calculation section ###
+
+# Distance
 clickDis = 3
 scanDistanceCalc = scanDistance
 
+# Azimuth
 scanAzi = 6
-clicksScanAzi = 0
+clickScanAzi = 0
 scanAziStep = 2
 scanAziLeft = -scanAzimuth
 scanAziRight = scanAzimuth
@@ -220,17 +228,20 @@ xSearchAziStep_ = xSearchAziStep
 searchAziLeft = wWindow/2+scanAziLeft*pxScaleAzi
 searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
 dweelTime = (hWindow-wFrame*2)/dweelTime
+
+# Elevation
 scanEle = 4
-clicksScanEle = 0
+clickScanEle = 0
+scanEleStep = 1
 scanEleUp = scanElevation/4
 scanEleUp_ = scanEleUp/2
 scanEleDown = -scanElevation/4
 scanEleDown_ = scanEleDown/2
-scanEleStep = 1
 ySearchEle = center
 searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
 searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
 
+# Acquisition cursor
 xScanAim = center
 yScanAim = center
 yScanAim_ = yScanAim
@@ -249,12 +260,12 @@ aimIndexFoe = 0
 aimIndexRoam = 0
 aimBugAngle = 0
 
-
 # Font settings
 fontSet = pg.font.SysFont("Arial", 18, bold=False)
 fontDistSet = pg.font.SysFont("Arial", 16, bold=False)
 
-# Render text
+### Render text ###
+
 # Open menu
 #LEFT
 textFCR = fontSet.render("FCR", False, fontColorWhite)
@@ -307,7 +318,7 @@ textEleNum = fontSet.render(str(scanEle), False, fontColorWhite)
 textaimUpRange = fontDistSet.render(str(aimUpRange), False, fontColorWhite)
 textaimDownRange = fontDistSet.render(str(aimDownRange), False, fontColorWhite)
 #BUGANGLE
-textaimBugAngle = fontSet.render(str(aimBugAngle), False, fontColorWhite)
+textAimBugAngle = fontSet.render(str(aimBugAngle), False, fontColorWhite)
 
 # Show text start menu
 def OpenMenu():
@@ -333,7 +344,7 @@ def OpenMenu():
     wGame.screen.blit(textDTE, [360, 500]) 
     wGame.screen.blit(textFCROFF, [280, 300])
 
-# Fcr menu
+# FCR menu
 def FCRMenu():
     pg.draw.rect(wGame.screen, fontColorWhite,[85, 85, 430, 430], 2)
     pg.draw.rect(wGame.screen, fontColorBlack,[80, 165, 15, 75])
@@ -362,7 +373,6 @@ def FCRMenu():
 
     wGame.screen.blit(textCONT, [475, 155])
 
-    
     for i in range(7):
         if i == 3:
             pg.draw.line(wGame.screen, fontColorWhite, (115, 195+35*i),(130, 195+35*i),2)
@@ -375,7 +385,6 @@ def FCRMenu():
             pg.draw.line(wGame.screen, fontColorWhite, (200+35*i, 488),(200+35*i, 498),2)
     for i in range(3):
         pg.draw.line(wGame.screen, colorDBlue, (490, 200+100*i),(512, 200+100*i),2)
-
 
 def drawSearchAzi(xL, xP):
     pg.draw.line(wGame.screen, colorDBlue, (xL, 120), (xL, 495), 2)
@@ -402,6 +411,8 @@ def drawAimIco(x, y):
 
 def drawAimCircleIco(x, y, color):
     pg.draw.circle(wGame.screen, color, (x, y), 10, 1)
+
+def drawAimText():
     wGame.screen.blit(textFOE, [490, 366])
     wGame.screen.blit(textROAM, [475, 435])
    
@@ -498,15 +509,17 @@ else:
     run = False
     print('Exit')
 
+# Main loop
 while run:
     dt = clock.tick()
     msTimeBarAzi += dt
 
-    # graphic init
+    # Graphic init
     wGame.cockpit()
 
-    # event handling
+    # Event handling 
     # Ctrl + C to terminate
+    keys = pg.key.get_pressed()
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False
@@ -517,8 +530,7 @@ while run:
                     else:
                         aimLogic = False
     
-    keys = pg.key.get_pressed()
-    # button event
+    # Button event
     if Button1.draw():
         print('1')
         if FCR == True and clickDis<=2:
@@ -544,71 +556,76 @@ while run:
     if Button3.draw():
         print('3')
         if FCR == True:
-            clicksScanAzi += 1              
-            if clicksScanAzi == 1:
+            clickScanAzi += 1              
+            if clickScanAzi == 1:
                 scanAzi = 3
                 scanAziLeft = -30
                 scanAziRight = 30                
-            elif clicksScanAzi == 2:
+            elif clickScanAzi == 2:
                 scanAzi = 1
                 scanAziLeft = -10
                 scanAziRight = 10
             else:
-                clicksScanAzi = 0
+                clickScanAzi = 0
                 scanAzi = 6
                 scanAziLeft = -60
                 scanAziRight = 60                       
     if Button4.draw():
         print('4')
         if FCR == True:
-            clicksScanEle += 1              
-            if clicksScanEle == 1:
+            clickScanEle += 1              
+            if clickScanEle == 1:
                 scanEle = 1
                 scanEleUp = 4.9/2
                 scanEleDown = -4.9/2
-            elif clicksScanEle == 2:
+            elif clickScanEle == 2:
                 scanEle = 2
                 scanEleUp = 12/2
                 scanEleDown = -12/2
             else:
-                clicksScanEle = 0
+                clickScanEle = 0
                 scanEle = 4
                 scanEleUp = 26.2/2
                 scanEleDown = -26.2/2
             scanEleUp_ = scanEleUp
             scanEleDown_ = scanEleDown
     if Button5.draw():
-        print('5')
+        print('5' + btnInfo)
     if Button6.draw():
-        print('6')
+        print('6' + btnInfo)
     if Button7.draw():
-        print('7')    
+        print('7' + btnInfo)    
     if Button8.draw():
-        print('8')
+        print('8' + btnInfo)
     if Button9.draw():
         print('9')
-        aimRoam = False
-        aimFoe = True
-        aimIndexFoe += 1
-        if aimIndexFoe == foeTarget:
-            aimIndexFoe = 0
+        if allTargets > 0 and FCR == True:
+            aimRoam = False
+            aimFoe = True
+            if aimIndexFoe < foeTarget-1:
+                aimIndexFoe += 1
+            else:
+                aimIndexFoe = 0
     if Button10.draw():
         print('10')
-        aimRoam = True
-        aimFoe = False
-        aimIndexRoam += 1
-        if aimIndexRoam == roamTarget:
-            aimIndexRoam = 0  
+        if allTargets > 0 and FCR == True:
+            aimRoam = True
+            aimFoe = False
+            
+            if aimIndexRoam < roamTarget-1:
+                aimIndexRoam += 1
+            else:
+                aimIndexRoam = 0  
     if Button11.draw():
-        print('11')
+        print('11' + btnInfo)
     if Button12.draw():
-        print('12')
+        print('12' + btnInfo)
     if Button13.draw():
-        print('13')    
+        print('13' + btnInfo)    
     if Button14.draw():
-        print('14')
+        print('14' + btnInfo)
     if Button15.draw():
-        print('15')
+        print('15' + btnInfo)
     if Button16.draw():
         print('16')
         if SWAP == False:
@@ -616,15 +633,17 @@ while run:
         else:
             SWAP = False 
     if Button17.draw():
-        print('17')        
+        print('17')
+        if FCR == True:
+            FCR = False        
     if Button18.draw():
-        print('18')
+        print('18' + btnInfo)
     if Button19.draw():
-        print('19')
+        print('19' + btnInfo)
     if Button20.draw():
-        print('20')
-    # keyboard event
-    # Azi
+        print('20' + btnInfo)
+    
+    # Keyboard event
     if keys[pg.K_h]:
         if scanAziRight < scanAzimuth:   
             scanAziLeft += scanAziStep
@@ -646,7 +665,6 @@ while run:
             scanEleDown -= scanEleStep
             scanEleUp_ += scanEleStep
             scanEleDown_ += scanEleStep
-    # Aim
     if keys[pg.K_RIGHT]:
         if xScanAim < searchAziRight:
             xScanAim += scanAimStep
@@ -662,11 +680,10 @@ while run:
             yScanAim += scanAimStep
             yScanAim_ -= scanAimStep
            
-
     # Receive decoded message
     message = myUDP.receive()
 
-    # Receive section / Implementation of variable
+    # Implementation of the variable from the message
     altPawn = message[0]
     distFriend, aziFriend, eleFriend = message[1], message[2], message[3]
     angleToPawnFriend, altFriend, indexFriend = message[4], message[5], int(message[6])
@@ -676,9 +693,8 @@ while run:
     angleToPawnRoam, altRoam, indexRoam = message[16], message[17], int(message[18])
     allTargets, friendTarget, foeTarget, roamTarget = int(message[19]), int(message[20]),  int(message[21]),  int(message[22])
 
+    # Save variables
     if allTargets > 0:
-
-        # Calculate and save variables
         if friendTarget > 0:
             for i in range(friendTarget):
                 if indexFriend > 0:    
@@ -709,12 +725,12 @@ while run:
                     objectsRoam[indexRoam-1][4] = altRoam
                     objectsRoam[indexRoam-1][5] = indexRoam
 
-
-    # Refresh variables and text
+    # Refresh variables
     pxScaleDis = (hWindow-wFrame*2)/scanDistance
     searchEleDown = hWindow/2+scanEleDown*pxScaleEle/2
     searchEleUp = hWindow/2+scanEleUp*pxScaleEle/2
 
+    # Check if acquisition cursor is on and calc elevation range and distance
     if aimLogic == True:
         if aimFoe == True:
             aimTrackDis = objectsLastFoe[aimIndexFoe][0]*pxScaleDis
@@ -740,6 +756,7 @@ while run:
         if scanEleDown_ >= 0:    
             aimDownRange = 2*(scanEleDown_/360)*np.pi*aimDist
 
+    # Converting units
     if SWAP == False:
         textDist = fontSet.render(str(round(scanDistance*Nm)), False, fontColorWhite)
         textaimUpRange = fontDistSet.render(str(int(aimUpRange/aimNorm*feet)), False, fontColorWhite)
@@ -749,9 +766,11 @@ while run:
         textaimUpRange = fontDistSet.render(str(int(aimUpRange/aimNorm)), False, fontColorWhite)
         textaimDownRange = fontDistSet.render(str(int(aimDownRange/aimNorm)), False, fontColorWhite)
 
+    # Display azimuth and bar options
     textAziNum = fontSet.render(str(round(scanAzi)), False, fontColorWhite)
     textEleNum = fontSet.render(str(round(scanEle)), False, fontColorWhite)
 
+    # Main FCR action
     if FCR == True:
         FCRMenu()
         # Draw targets
@@ -779,18 +798,30 @@ while run:
                                     drawLastFoe(aimIndexFoe)
                                 aimBugAngle = int(objectsLastFoe[aimIndexFoe][1])
                                 if aimBugAngle <= 0:
-                                    textaimBugAngle = fontSet.render(str(aimBugAngle*-1) + str('L'), False, fontColorWhite)
+                                    textAimBugAngle = fontSet.render(str(aimBugAngle*-1) + str('L'), False, fontColorWhite)
                                 else:
-                                    textaimBugAngle = fontSet.render(str(aimBugAngle) + str('P'), False, fontColorWhite)
-                                wGame.screen.blit(textaimBugAngle, [145, 110])
+                                    textAimBugAngle = fontSet.render(str(aimBugAngle) + str('R'), False, fontColorWhite)
+                                wGame.screen.blit(textAimBugAngle, [145, 110])
                                 if ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) <= searchAziLeft+20:
                                     if scanAziLeft > -scanAzimuth:
                                         scanAziLeft -= scanAziStep
                                         scanAziRight -= scanAziStep
-                                if ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) >= searchAziRight-20:
+                                elif ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) >= searchAziRight-20:
                                     if scanAziRight < scanAzimuth:    
                                         scanAziLeft += scanAziStep
                                         scanAziRight += scanAziStep
+                                if ((hWindow/2+objectsFoe[aimIndexFoe][2]*pxScaleEle)) >= hWindow/2+scanEleUp*pxScaleEle:
+                                    if scanEleUp < scanElevation:   
+                                        scanEleUp += scanEleStep
+                                        scanEleDown += scanEleStep
+                                        scanEleUp_ -= scanEleStep
+                                        scanEleDown_ -= scanEleStep
+                                elif ((hWindow/2+objectsFoe[aimIndexFoe][2]*pxScaleEle)) <= hWindow/2+scanEleDown*pxScaleEle:
+                                    if scanEleDown > -scanElevation:
+                                        scanEleUp -= scanEleStep
+                                        scanEleDown -= scanEleStep
+                                        scanEleUp_ += scanEleStep
+                                        scanEleDown_ += scanEleStep
                             if aimLogic == False:
                                 drawFoe(i)
                                 drawLastFoe(i)
@@ -809,10 +840,10 @@ while run:
                                     drawLastRoam(aimIndexRoam)
                                 aimBugAngle = int(objectsLastRoam[aimIndexRoam][1])
                                 if aimBugAngle <= 0:
-                                    textaimBugAngle = fontSet.render(str(aimBugAngle*-1) + str('L'), False, fontColorWhite)
+                                    textAimBugAngle = fontSet.render(str(aimBugAngle*-1) + str('L'), False, fontColorWhite)
                                 else:
-                                    textaimBugAngle = fontSet.render(str(aimBugAngle) + str('P'), False, fontColorWhite)
-                                wGame.screen.blit(textaimBugAngle, [145, 110])
+                                    textAimBugAngle = fontSet.render(str(aimBugAngle) + str('R'), False, fontColorWhite)
+                                wGame.screen.blit(textAimBugAngle, [145, 110])
                                 if ((wWindow/2+objectsRoam[aimIndexRoam][1]*pxScaleAzi)) <= searchAziLeft+20:
                                     if scanAziLeft > -scanAzimuth:
                                         scanAziLeft -= scanAziStep
@@ -820,7 +851,19 @@ while run:
                                 if ((wWindow/2+objectsRoam[aimIndexRoam][1]*pxScaleAzi)) >= searchAziRight-20:
                                     if scanAziRight < scanAzimuth:    
                                         scanAziLeft += scanAziStep
-                                        scanAziRight += scanAziStep                            
+                                        scanAziRight += scanAziStep
+                                if ((hWindow/2+objectsRoam[aimIndexRoam][2]*pxScaleEle)) >= hWindow/2+scanEleUp*pxScaleEle:
+                                    if scanEleUp < scanElevation:   
+                                        scanEleUp += scanEleStep
+                                        scanEleDown += scanEleStep
+                                        scanEleUp_ -= scanEleStep
+                                        scanEleDown_ -= scanEleStep
+                                elif ((hWindow/2+objectsRoam[aimIndexRoam][2]*pxScaleEle)) <= hWindow/2+scanEleDown*pxScaleEle:
+                                    if scanEleDown > -scanElevation:
+                                        scanEleUp -= scanEleStep
+                                        scanEleDown -= scanEleStep
+                                        scanEleUp_ += scanEleStep
+                                        scanEleDown_ += scanEleStep
                             if aimLogic == False:
                                 drawRoam(i)
                                 drawLastRoam(i)
@@ -830,6 +873,7 @@ while run:
         searchAziRight = wWindow/2+scanAziRight*pxScaleAzi
         if scanAzi < 6:
             drawSearchAzi(searchAziLeft, searchAziRight)
+
         # Draw antenna search azi ico
         if msTimeBarAzi < barAziMove:
             xSearchAzi += xSearchAziStep
@@ -838,6 +882,7 @@ while run:
             elif xSearchAzi>=searchAziRight:
                 xSearchAziStep = -xSearchAziStep_
             drawSearchAziIco(xSearchAzi)
+
         # Draw antenna search ele ico
             if scanEle == 1:
                 ySearchEle = (searchEleDown+searchEleUp)/2
@@ -865,22 +910,11 @@ while run:
         # Draw aim ico
         if aimLogic == False:
             drawAimIco(xScanAim, yScanAim)
+        else:
+            drawAimText()
     else:    
         OpenMenu()
             
 
-    # Delete section
     del message
-    if indexDel > 100:
-        if allTargets > 0:
-            del allTargets   
-        if friendTarget > 0:
-            del distFriend, aziFriend, eleFriend, angleToPawnFriend, altFriend, indexFriend  
-        if foeTarget > 0:
-            del distFoe, aziFoe, eleFoe, angleToPawnFoe, altFoe, indexFoe
-        if roamTarget > 0:  
-            del distRoam, aziRoam, eleRoam, angleToPawnRoam, altRoam, indexRoam
-        indexDel = 0
-    indexDel += 1 
-
     pg.display.update()
