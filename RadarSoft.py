@@ -76,7 +76,6 @@ class Cockpit:
         pg.draw.line(self.screen, fontColorBlack, [self._x4-10,self._y4],[self._x4+10,self._y4],2) 
         pg.draw.line(self.screen, fontColorBlack, [self._x4,self._y4-10],[self._x4,self._y4+10],2)
     
-
     def circle(self, pos):
         self.pos = pos
         self.circle_c = 'red'
@@ -123,10 +122,9 @@ class Button:
 
         return btnLogic
 
-
+# Font, clock, garbage collector init
 pg.font.init()
 gc.collect()
-msTimeBarAzi = 0
 clock = pg.time.Clock()
 
 # Radar search parametr and data
@@ -139,6 +137,7 @@ barAziLogic = False
 targetInArea = False
 Nm = 0.539956
 feet = 3280.8 / 1000
+msTimeBarAzi = 0
 
 # Colors
 colorFriend = (0,255,0) # Green
