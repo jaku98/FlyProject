@@ -1,6 +1,6 @@
 # Title [pol]: Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
 # Title [eng]: Radar software model of airborne situational awareness system
-# Author: JAKUBCZYL MARCIN
+# Author: JAKUBCZYL MARCIN, 2022
 # The program works with a simulation created in the Unreal Engine 4
 import pygame as pg
 from pygame.locals import *
@@ -35,7 +35,7 @@ class Cockpit:
     def __init__(self, x, y):
         pg.init()
         self.screen = pg.display.set_mode((x, y))
-        pg.display.set_caption("RADAR Air to Air")
+        pg.display.set_caption("MFD - FCR Format")
 
     def cockpit(self):
         self._x1 = 40
