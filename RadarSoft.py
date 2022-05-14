@@ -4,9 +4,14 @@
 # The program works with a simulation created in the Unreal Engine 4
 import pygame as pg
 from pygame.locals import *
-import socket, struct, select, sys, gc
+import socket, struct, select, sys, gc, os
 import numpy as np 
 
+# Font, clock, garbage collector init
+pg.font.init()
+gc.collect()
+clock = pg.time.Clock()
+cwd = os.getcwd()
 
 class UDPConnection:
 
@@ -36,6 +41,8 @@ class Cockpit:
         pg.init()
         self.screen = pg.display.set_mode((x, y))
         pg.display.set_caption("MFD - FCR Format")
+        icon = pg.image.load(cwd + "MFD.png")
+        pg.display.set_icon(icon)
 
     def cockpit(self):
         self._x1 = 40
@@ -122,10 +129,6 @@ class Button:
 
         return btnLogic
 
-# Font, clock, garbage collector init
-pg.font.init()
-gc.collect()
-clock = pg.time.Clock()
 
 # Radar search parametr and data
 scanElevation = 26.2*2
@@ -161,9 +164,12 @@ objectsLastRoam = np.zeros((10,4))
 roamTarget = 0
 foeTarget = 0
 friendTarget = 0
-imageFriend = pg.transform.scale(pg.image.load('pic/friend.png'),[25,25])
-imageFoe = pg.transform.scale(pg.image.load('pic/foe.png'),[25,25])
-imageRoam = pg.transform.scale(pg.image.load('pic/unknow.png'),[25,25])
+imageFriend_ = pg.image.load(cwd + 'friend.png')
+imageFoe_ = pg.image.load(cwd + 'foe.png')
+imageRoam_ = pg.image.load(cwd + 'unknow.png')
+imageFriend = pg.transform.scale(imageFriend_, [25,25])
+imageFoe = pg.transform.scale(imageFoe_, [25,25])
+imageRoam = pg.transform.scale(imageRoam_, [25,25])
 arrayFriendImg = [imageFriend]*10
 arrayFoeImg = [imageFoe]*10
 arrayRoamImg = [imageRoam]*10
