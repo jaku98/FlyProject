@@ -4,7 +4,7 @@ filepath2 = 'D:\\Unreal Projects\\Packed\\FlyProject\\FlyProject\\about.txt'
 f1 = open(filepath1, "w")
 f2 = open(filepath2, "w")
 
-lines = ['''[POL] Aplikacja modeluje system zobrazowania sytuacji powietrznej instalowany w samolotach mysliwskich. Zobrazowanie informacji przedstawione zostalo na wyswietlaczu MDF w formacie FCR \n
+lines = ['''[POL] Aplikacja modeluje system zobrazowania sytuacji powietrznej instalowany w samolotach mysliwskich. Zobrazowanie informacji przedstawione zostalo na wyswietlaczu MDF w formacie FCR. \n
 [ENG] The application models the airborne situation display system installed in fighter aircrafts. 
 The information display was presented on the MDF display in the FCR format. \n
 KEYBOARD:
