@@ -688,7 +688,7 @@ while run:
            
     # Receive decoded message
     message = myUDP.receive()
-
+    print(message)
     # Implementation of the variable from the message
     altPawn = message[0]
     distFriend, aziFriend, eleFriend = message[1], message[2], message[3]

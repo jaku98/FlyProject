@@ -1,5 +1,5 @@
 filepath1 = 'D:\\Unreal Projects\\FlyProject2\\about.txt'
-filepath2 = 'D:\\Unreal Projects\\Packed\\FlyProject\\FlyProject\\about.txt'
+filepath2 = 'D:\\Unreal Projects\\AplikacjaGotowa\\WindowsNoEditor\\FlyProject\\about.txt'
 
 f1 = open(filepath1, "w")
 f2 = open(filepath2, "w")
