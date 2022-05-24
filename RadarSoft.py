@@ -1,12 +1,14 @@
 # Title [pol]: Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
-# Title [eng]: Radar software model of airborne situational awareness system
+# Title [eng]: Software model of the air situation display system in the on-board radar
 # Author: JAKUBCZYK MARCIN, Military University of Technology in Warsaw, 2022
 # Description: The program works with a simulation created in the Unreal Engine 4
 #              Information display system in FCR format with basic operation.
 import pygame as pg
 from pygame.locals import *
 import socket, struct, select, sys, gc, os
-import numpy as np 
+import numpy as np
+import threading
+import time
 
 # Font, clock, garbage collector init
 pg.font.init()
@@ -175,6 +177,7 @@ arrayFriendImg = [imageFriend]*10
 arrayFoeImg = [imageFoe]*10
 arrayRoamImg = [imageRoam]*10
 indexDel = 0
+message = [0]*23
 
 # Window settings
 wWindow = 600
@@ -515,11 +518,23 @@ else:
     run = False
     print('Exit')
 
+stop_threads = False
+def recmessage():
+    global message
+    global stop_threads
+    while True:
+        message = myUDP.receive()
+        if stop_threads:
+            break
+t1 = threading.Thread(target=recmessage)
+t1.start()
+
 # Main loop
-while run:
+while True:
+        
     dt = clock.tick()
     msTimeBarAzi += dt
-
+    pg.time.delay(20)
     # Graphic init
     wGame.cockpit()
 
@@ -529,6 +544,10 @@ while run:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False
+            stop_threads = True
+            t1.join()
+            pg.quit()
+            sys.exit()
         if event.type == pg.KEYUP:
             if event.key==K_SPACE:
                     if aimLogic == False:
@@ -685,9 +704,9 @@ while run:
         if yScanAim < searchAimDown:
             yScanAim += scanAimStep
             yScanAim_ -= scanAimStep
-           
+        
     # Receive decoded message
-    message = myUDP.receive()
+    #message = myUDP.receive()
     # Implementation of the variable from the message
     altPawn = message[0]
     distFriend, aziFriend, eleFriend = message[1], message[2], message[3]
@@ -807,21 +826,21 @@ while run:
                                 else:
                                     textAimBugAngle = fontSet.render(str(aimBugAngle) + str('R'), False, fontColorWhite)
                                 wGame.screen.blit(textAimBugAngle, [145, 110])
-                                if ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) <= searchAziLeft+20:
+                                if ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) <= searchAziLeft+30:
                                     if scanAziLeft > -scanAzimuth:
                                         scanAziLeft -= scanAziStep
                                         scanAziRight -= scanAziStep
-                                elif ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) >= searchAziRight-20:
+                                elif ((wWindow/2+objectsFoe[aimIndexFoe][1]*pxScaleAzi)) >= searchAziRight-30:
                                     if scanAziRight < scanAzimuth:    
                                         scanAziLeft += scanAziStep
                                         scanAziRight += scanAziStep
-                                if ((hWindow/2+objectsFoe[aimIndexFoe][2]*pxScaleEle)) >= hWindow/2+scanEleUp*pxScaleEle:
+                                if ((hWindow/2+objectsFoe[aimIndexFoe][2]*pxScaleEle)) >= hWindow/2+scanEleUp*pxScaleEle-30:
                                     if scanEleUp < scanElevation:   
                                         scanEleUp += scanEleStep
                                         scanEleDown += scanEleStep
                                         scanEleUp_ -= scanEleStep
                                         scanEleDown_ -= scanEleStep
-                                elif ((hWindow/2+objectsFoe[aimIndexFoe][2]*pxScaleEle)) <= hWindow/2+scanEleDown*pxScaleEle:
+                                elif ((hWindow/2+objectsFoe[aimIndexFoe][2]*pxScaleEle)) <= hWindow/2+scanEleDown*pxScaleEle+30:
                                     if scanEleDown > -scanElevation:
                                         scanEleUp -= scanEleStep
                                         scanEleDown -= scanEleStep
@@ -830,6 +849,8 @@ while run:
                             if aimLogic == False:
                                 drawFoe(i)
                                 drawLastFoe(i)
+                            print('x', hWindow/2+objectsFoe[aimIndexFoe][2]*pxScaleEle)
+                            print('y', hWindow/2+scanEleUp*pxScaleEle)
             if roamTarget > 0:
                 for i in range(roamTarget):
                     if ((-scanAzimuth<=objectsRoam[i][1]<=scanAzimuth) and (-scanElevation<=objectsRoam[i][2]<=scanElevation)
@@ -921,5 +942,11 @@ while run:
         OpenMenu()
             
 
-    del message
+    #del message
     pg.display.update()
+
+#t1 = threading.Thread(target=recmessage)
+#t2 = threading.Thread(target=main, args=(msTimeBarAzi))
+
+#t1.start()
+#t2.start()
