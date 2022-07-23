@@ -17,6 +17,7 @@ airborne radar, aircraft display system, situational awareness, artificial intel
 
 ![alt text](https://github.com/jaku98/FlyProject/blob/master/aircraftMFD.png?raw=true|width=300)
 
+<img src="https://github.com/jaku98/FlyProject/blob/master/aircraftMFD.png" width="400">
 
 VIDEO: https://drive.google.com/file/d/12oIWw9cPOuGFlcEeoAcQXNdijY97V0Lw/view?usp=sharing
 
