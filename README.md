@@ -2,7 +2,7 @@
 ## Title [pol]: Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
 Author: jaku98, mjakubczyk98@gmail.com, 2022
 
-![alt text](https://github.com/jaku98/FlyProject/blob/master/aircraft_0.png)
+![alt text](https://github.com/jaku98/FlyProject/blob/master/aircraft_0.png?raw=true)
 
 
 
