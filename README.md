@@ -6,6 +6,7 @@ Description: The application is a model of display system installed in multi-pur
 The application models the airborne situation display system installed in fighter aircrafts. 
 Information display system in FCR format with basic operation.
 
-
+Key words:
+airborne radar, aircraft display system, situational awareness, artificial intelligence 
 
 DOWNLOAD & ENJOY: https://drive.google.com/file/d/1c2n2DCK8Mxcb2lbvkErUQhpgL9urimPM/view?usp=sharing (WIN64bit)
