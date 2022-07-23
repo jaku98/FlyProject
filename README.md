@@ -1,5 +1,5 @@
-# Title [pol]: Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
-## Title [eng]: Radar software model of airborne situational awareness system
+# Title [eng]: Radar software model of airborne situational awareness system
+## Title [pol]: Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
 Author: jaku98, mjakubczyk98@gmail.com, 2022
 
 Description: The application is a model of display system installed in multi-purpose aircrafts. The project was realized on the basis of two graphics engines: three-dimensional graphics engine Unreal Engine 4 and two-dimensional graphics engine Python Pygame. The common link between both engines in the application is the UDP user data packet protocol. The interactive application can be used for educational purposes. 
