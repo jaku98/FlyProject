@@ -1,6 +1,6 @@
 # Title [pol]: Model programowy systemu zobrazowania sytuacji powietrznej w radarze pokładowym
 # Title [eng]: Software model of the air situation display system in the on-board radar
-# Author: JAKUBCZYK MARCIN, Military University of Technology in Warsaw, 2022
+# Author: JAKUBCZYK MARCIN, mjakubczyk98@gmail.com, 2022
 # Description: The program works with a simulation created in the Unreal Engine 4
 #              Information display system in FCR format with basic operation.
 import pygame as pg
